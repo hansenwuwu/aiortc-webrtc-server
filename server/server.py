@@ -26,6 +26,7 @@ pcs = set()
 id_list = []
 
 pc_dict = {}
+name_dict = {}
 video_track_dict = {}
 audio_track_dict = {}
 
@@ -102,12 +103,27 @@ async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
     return web.Response(content_type="text/html", text=content)
 
+async def javascript(request):
+    content = open(os.path.join(ROOT, "index.js"), "r").read()
+    return web.Response(content_type="application/javascript", text=content)
+
 async def test(request):
     content = json.dumps("{'test':'test'}")
     return web.Response(content_type="application/json", text=content)
 
 def getPeerList(request):
-    content = json.dumps(id_list)
+    
+    output = []
+    for e in id_list:
+        output.append({
+            "id": e,
+            "name": name_dict[e]
+        })
+    
+    content = json.dumps({
+        "output": output
+    })
+
     return web.Response(content_type="application/json", text=content)
 
 async def clearAllConnection(request):
@@ -208,6 +224,13 @@ async def offer_reflect(request):
     except:
         id = 'hololens'
 
+    try:
+        name = params['name']
+    except:
+        name = "visitor-(%s)" % uuid.uuid4()
+    if not name:
+        name = "visitor-(%s)" % uuid.uuid4()
+    print('name: ', name)
     pc = RTCPeerConnection()
 
     if id == 'hololens' or id =="":
@@ -215,11 +238,12 @@ async def offer_reflect(request):
     else:
         pc_id = "PeerConnection(%s)" % uuid.uuid4()
     
-    print(id)
+    # print(id)
     
     pcs.add(pc)
 
     id_list.append(pc_id)
+    name_dict[pc_id] = name
     pc_dict[pc_id] = pc
 
     def log_info(msg, *args):
@@ -285,6 +309,64 @@ async def offer_reflect(request):
         ),
     )
 
+async def offer_receive_only(request):
+    params = await request.json()
+    offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+
+    try:
+        id = params["id"]
+    except:
+        id = 'hololens'
+
+    pc.addTrack(audio_track_dict[id])
+    pc.addTrack(video_track_dict[id])
+
+    def log_info(msg, *args):
+        logger.info(pc_id + " " + msg, *args)
+
+    log_info("Created for %s", request.remote)
+
+    @pc.on("iceconnectionstatechange")
+    async def on_iceconnectionstatechange():
+        log_info("ICE connection state is %s", pc.iceConnectionState)
+        if pc.iceConnectionState == "failed":
+            await pc.close()
+            pcs.discard(pc)
+
+    @pc.on("track")
+    def on_track(track):
+        log_info("Track %s received", track.kind)
+
+        # if len(pcs) > 1 and track.kind == "video":
+        #     for e in id_list:
+        #         pc.addTrack( pc_dict[e] )
+        #         break
+        log_info("ready to extract track")
+        if track.kind == "audio":
+            log_info("add audio track")
+        elif track.kind == "video":
+            log_info("add video track")
+
+            
+        @track.on("ended")
+        async def on_ended():
+            log_info("Track %s ended", track.kind)
+            # await pc.close()
+
+    # handle offer
+    await pc.setRemoteDescription(offer)
+    # await recorder.start()
+
+    # send answer
+    answer = await pc.createAnswer()
+    await pc.setLocalDescription(answer)
+
+    return web.Response(
+        content_type="application/json",
+        text=json.dumps(
+            {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
+        ),
+    )
 
 async def on_shutdown(app):
     # close peer connections
@@ -338,54 +420,12 @@ if __name__ == "__main__":
     }
 
     cors.add(app.router.add_get("/", index), header)
-
-    cors.add(app.router.add_post("/offer", offer), {
-        "*":
-            aiohttp_cors.ResourceOptions(
-                allow_credentials=True,
-            expose_headers=("X-Custom-Server-Header",),
-            allow_headers=("X-Requested-With", "Content-Type"),
-            max_age=3600,),
-    })
-
-    cors.add(app.router.add_post("/offer_reflect", offer_reflect), {
-        "*":
-            aiohttp_cors.ResourceOptions(
-                allow_credentials=True,
-            expose_headers=("X-Custom-Server-Header",),
-            allow_headers=("X-Requested-With", "Content-Type"),
-            max_age=3600,),
-    })
-
-    cors.add(app.router.add_get("/test", test), {
-        "*":
-            aiohttp_cors.ResourceOptions(
-                allow_credentials=True,
-            expose_headers=("X-Custom-Server-Header",),
-            allow_headers=("X-Requested-With", "Content-Type"),
-            max_age=3600,),
-    })
-
-    cors.add(app.router.add_get("/getPeerList", getPeerList), {
-        "*":
-            aiohttp_cors.ResourceOptions(
-                allow_credentials=True,
-            expose_headers=("X-Custom-Server-Header",),
-            allow_headers=("X-Requested-With", "Content-Type"),
-            max_age=3600,),
-    })
-
-    cors.add(app.router.add_get("/clearAllConnection", clearAllConnection), {
-        "*":
-            aiohttp_cors.ResourceOptions(
-                allow_credentials=True,
-            expose_headers=("X-Custom-Server-Header",),
-            allow_headers=("X-Requested-With", "Content-Type"),
-            max_age=3600,),
-    })
-
-    
-    
+    cors.add(app.router.add_get('/index.js', javascript), header)
+    cors.add(app.router.add_post("/offer", offer), header)
+    cors.add(app.router.add_post("/offer_reflect", offer_reflect), header)
+    cors.add(app.router.add_get("/test", test), header)
+    cors.add(app.router.add_get("/getPeerList", getPeerList), header)
+    cors.add(app.router.add_get("/clearAllConnection", clearAllConnection), header)
 
     web.run_app(
         app, access_log=None, host=args.host, port=args.port, ssl_context=ssl_context

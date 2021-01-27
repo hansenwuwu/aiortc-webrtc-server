@@ -254,13 +254,15 @@ async function init() {
       console.log(localPeerConnection.localDescription.sdp);
       var offer = localPeerConnection.localDescription;
 
-      id = offerSdpTextarea.value
+      client_id = offerSdpTextarea.value
+      client_name = answerSdpTextarea.value
 
       return fetch('http://localhost:8080/offer_reflect', {
         body: JSON.stringify({
           sdp: offer.sdp,
           type: offer.type,
-          id: id
+          id: client_id,
+          name: client_name
         }),
         headers: {
           'Content-Type': 'application/json'
