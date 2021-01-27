@@ -318,11 +318,14 @@ async def offer_receive_only(request):
     except:
         id = 'hololens'
 
+    pc = RTCPeerConnection()
+    pcs.add(pc)
+
     pc.addTrack(audio_track_dict[id])
     pc.addTrack(video_track_dict[id])
 
     def log_info(msg, *args):
-        logger.info(pc_id + " " + msg, *args)
+        logger.info(id + " " + msg, *args)
 
     log_info("Created for %s", request.remote)
 
@@ -337,16 +340,13 @@ async def offer_receive_only(request):
     def on_track(track):
         log_info("Track %s received", track.kind)
 
-        # if len(pcs) > 1 and track.kind == "video":
-        #     for e in id_list:
-        #         pc.addTrack( pc_dict[e] )
-        #         break
         log_info("ready to extract track")
         if track.kind == "audio":
             log_info("add audio track")
+            # pc.addTrack(track)
         elif track.kind == "video":
             log_info("add video track")
-
+            # pc.addTrack(track)
             
         @track.on("ended")
         async def on_ended():
@@ -355,6 +355,11 @@ async def offer_receive_only(request):
 
     # handle offer
     await pc.setRemoteDescription(offer)
+    # for t in pc.getTransceivers():
+    #     if t.kind == "audio":
+    #         pc.addTrack(audio_track_dict[id])
+    #     elif t.kind == "video":
+    #         pc.addTrack(video_track_dict[id])
     # await recorder.start()
 
     # send answer
@@ -423,6 +428,7 @@ if __name__ == "__main__":
     cors.add(app.router.add_get('/index.js', javascript), header)
     cors.add(app.router.add_post("/offer", offer), header)
     cors.add(app.router.add_post("/offer_reflect", offer_reflect), header)
+    cors.add(app.router.add_post("/offer_receive_only", offer_receive_only), header)
     cors.add(app.router.add_get("/test", test), header)
     cors.add(app.router.add_get("/getPeerList", getPeerList), header)
     cors.add(app.router.add_get("/clearAllConnection", clearAllConnection), header)

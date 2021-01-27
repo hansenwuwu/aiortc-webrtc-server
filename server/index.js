@@ -26,7 +26,7 @@ async function connect() {
     }
 
     console.log('connect value: ', selectConnection.val());
-
+    connectWebRTC();
 }
 
 async function refresh() {
@@ -63,34 +63,51 @@ async function refresh() {
 
 // webrtc part
 let localPeerConnection;
-const remoteVideo = $('#remoteVideo');
+let localStream;
+// const remoteVideo = $('#remoteVideo');
+const remoteVideo = document.querySelector("div#remote video");
+// console.log(remoteVideo);
 
 async function connectWebRTC() {
+
+    // video & audio
+    // var mediaConstraints = {
+    //     audio: true,            // We want an audio track
+    //     video: true             // ...and we want a video track
+    // };
+
+    // const userMedia = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    // localStream = userMedia;
+
+    // const videoTracks = localStream.getVideoTracks();
+    // const audioTracks = localStream.getAudioTracks();
+
+    // if (videoTracks.length > 0) {
+    //     console.log(`Using video device: ${videoTracks[0].label}`);
+    // }
+
+    // if (audioTracks.length > 0) {
+    //     console.log(`Using audio device: ${audioTracks[0].label}`);
+    // }
+
     localPeerConnection = new RTCPeerConnection();
     console.log('initialize peer connection');
     localPeerConnection.onicecandidate = (e) =>
         onIceCandidate(localPeerConnection, e);
     localPeerConnection.ontrack = gotRemoteStream;
-    localPeerConnection.onconnectionstatechange = function (event) {
-        console.log('onconnectionstatechange: ', localPeerConnection.connectionState);
-        switch (localPeerConnection.connectionState) {
-            case "connected":
-                // The connection has become fully connected
-                break;
-            case "disconnected":
-            case "failed":
-                // One or more transports has terminated unexpectedly or in an error
-                break;
-            case "closed":
-                // The connection has been closed
-                break;
-        }
-    }
+    localPeerConnection.onconnectionstatechange = (e) => onConnectionStateChange(e);
+
+    // localStream
+    //     .getTracks()
+    //     .forEach((track) => localPeerConnection.addTrack(track, localStream));
 
     console.log('start negotiate');
+    negotiate();
+}
 
-    await negotiate();
-
+async function onConnectionStateChange(event) {
+    console.log('onConnectionStateChange: ', event);
+    console.log('onconnectionstatechange: ', localPeerConnection.connectionState);
 }
 
 async function onIceCandidate(pc, event) {
@@ -101,7 +118,7 @@ async function onIceCandidate(pc, event) {
     // }
 
     console.log(
-        `${getName(pc)} ICE candidate:\n${event.candidate ? event.candidate.candidate : "(null)"
+        `$ ICE candidate:\n${event.candidate ? event.candidate.candidate : "(null)"
         }`
     );
 }
@@ -112,12 +129,21 @@ function gotRemoteStream(e) {
         remoteVideo.srcObject = e.streams[0];
         console.log("Received remote stream");
     }
+    // if (remoteVideo.attr('src') !== e.streams[0]) {
+    //     remoteVideo.attr('src', e.streams[0]);
+    //     console.log("Received remote stream");
+    // }
+
 }
 
 function negotiate() {
-    return localPeerConnection.createOffer().then(function (offer) {
+    // localPeerConnection.addTransceiver('video', { direction: 'recvonly' });
+    // localPeerConnection.addTransceiver('audio', { direction: 'recvonly' });
+    return localPeerConnection.createOffer({ "offerToReceiveAudio": true, "offerToReceiveVideo": true }).then(function (offer) {
+        console.log('create offer: ', offer);
         return localPeerConnection.setLocalDescription(offer);
     }).then(function () {
+        console.log('middle');
         // wait for ICE gathering to complete
         return new Promise(function (resolve) {
             if (localPeerConnection.iceGatheringState === 'complete') {
@@ -133,7 +159,7 @@ function negotiate() {
             }
         });
     }).then(function () {
-        console.log(localPeerConnection.localDescription.sdp);
+        console.log('done offer sdp: \n', localPeerConnection.localDescription.sdp);
         var offer = localPeerConnection.localDescription;
 
         return fetch((SERVERIP + '/offer_receive_only'), {
@@ -157,3 +183,4 @@ function negotiate() {
         alert(e);
     });
 }
+
