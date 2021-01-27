@@ -98,6 +98,10 @@ class VideoTransformTrack(MediaStreamTrack):
         else:
             return frame
 
+async def index(request):
+    content = open(os.path.join(ROOT, "index.html"), "r").read()
+    return web.Response(content_type="text/html", text=content)
+
 async def test(request):
     content = json.dumps("{'test':'test'}")
     return web.Response(content_type="application/json", text=content)
@@ -324,6 +328,17 @@ if __name__ == "__main__":
 
     cors = aiohttp_cors.setup(app)
 
+    header = {
+        "*":
+            aiohttp_cors.ResourceOptions(
+                allow_credentials=True,
+            expose_headers=("X-Custom-Server-Header",),
+            allow_headers=("X-Requested-With", "Content-Type"),
+            max_age=3600,),
+    }
+
+    cors.add(app.router.add_get("/", index), header)
+
     cors.add(app.router.add_post("/offer", offer), {
         "*":
             aiohttp_cors.ResourceOptions(
@@ -368,6 +383,8 @@ if __name__ == "__main__":
             allow_headers=("X-Requested-With", "Content-Type"),
             max_age=3600,),
     })
+
+    
     
 
     web.run_app(
