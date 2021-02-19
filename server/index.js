@@ -64,13 +64,15 @@ async function refresh() {
 // webrtc part
 let localPeerConnection;
 let localStream;
+let sendChannel;
+const dataChannelOptions = { ordered: true };
 // const remoteVideo = $('#remoteVideo');
 const remoteVideo = document.querySelector("div#remote video");
 // console.log(remoteVideo);
 
 async function connectWebRTC() {
 
-    // video & audio
+    // ---- video & audio ---- 
     // var mediaConstraints = {
     //     audio: true,            // We want an audio track
     //     video: true             // ...and we want a video track
@@ -90,12 +92,27 @@ async function connectWebRTC() {
     //     console.log(`Using audio device: ${audioTracks[0].label}`);
     // }
 
-    localPeerConnection = new RTCPeerConnection();
+    var config = {
+        sdpSemantics: 'unified-plan'
+    };
+    // need this to connect to other website
+    config.iceServers = [{ urls: ['stun:stun.l.google.com:19302'] }];
+
+    localPeerConnection = new RTCPeerConnection(config);
     console.log('initialize peer connection');
     localPeerConnection.onicecandidate = (e) =>
         onIceCandidate(localPeerConnection, e);
     localPeerConnection.ontrack = gotRemoteStream;
     localPeerConnection.onconnectionstatechange = (e) => onConnectionStateChange(e);
+
+    // // ----- data channel -----
+    // sendChannel = localPeerConnection.createDataChannel(
+    //     "sendDataChannel",
+    //     dataChannelOptions
+    // );
+    // sendChannel.onopen = onSendChannelStateChange;
+    // sendChannel.onclose = onSendChannelStateChange;
+    // sendChannel.onerror = onSendChannelStateChange;
 
     // localStream
     //     .getTracks()
@@ -103,6 +120,22 @@ async function connectWebRTC() {
 
     console.log('start negotiate');
     negotiate();
+}
+
+const delay = (interval) => {
+    return new Promise((resolve) => {
+        setTimeout(resolve, interval);
+    });
+};
+
+function onSendChannelStateChange() {
+    const readyState = sendChannel.readyState;
+    console.log(`Send channel state is: ${readyState}`);
+    // if (readyState === "open") {
+    //     sendDataLoop = setInterval(sendData, 1000);
+    // } else {
+    //     clearInterval(sendDataLoop);
+    // }
 }
 
 async function onConnectionStateChange(event) {
