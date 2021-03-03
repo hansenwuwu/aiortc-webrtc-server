@@ -5,7 +5,6 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
 import uuid
-import logging
 
 # aiortc
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
@@ -13,8 +12,6 @@ from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
 class Params(BaseModel):
     sdp: str
     type: str
-
-logger = logging.getLogger("pc")
 
 app = FastAPI()
 
@@ -35,11 +32,6 @@ async def offer_reflect(params: Params):
     # name_dict[pc_id] = name
     # pc_dict[pc_id] = pc
 
-    def log_info(msg, *args):
-        logger.info(pc_id + " " + msg, *args)
-
-    log_info("Created for %s", pc_id)
-
     @pc.on("iceconnectionstatechange")
     async def on_iceconnectionstatechange():
         print("ICE connection state is %s", pc.iceConnectionState)
@@ -57,7 +49,7 @@ async def offer_reflect(params: Params):
 
     @pc.on("track")
     def on_track(track):
-        log_info("Track %s received", track.kind)
+        print("Track %s received", track.kind)
         if track.kind == "audio":
             print("add audio track")
             pc.addTrack(track)
