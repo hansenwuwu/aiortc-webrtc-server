@@ -5,16 +5,24 @@ import logging
 import os
 import ssl
 import uuid
+import time
+from random import randint
+import random
+import queue
 
 import cv2
 import numpy as np
 from aiohttp import web
+import aiohttp
+from aiohttp_requests import requests
 from av import VideoFrame
 
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder
 
 import aiohttp_cors
+
+JANUS_SERVER = 'http://192.168.4.200:8088/janus'
 
 # ------- YOLO -------- #
 
@@ -70,6 +78,11 @@ pc_dict = {}
 name_dict = {}
 video_track_dict = {}
 audio_track_dict = {}
+
+pc_videoTrackId_dict = {}
+
+pc_queue_dict = {}
+q = queue.Queue(maxsize=10)
 
 class VideoTransformTrack(MediaStreamTrack):
     """
@@ -142,6 +155,7 @@ class VideoTransformTrack(MediaStreamTrack):
         elif self.transform == "object-detection":
 
             if self.count == 0:
+                start_time = time.time()
                 self.count = 1
                 img = frame.to_ndarray(format="bgr24")
                 
@@ -154,6 +168,8 @@ class VideoTransformTrack(MediaStreamTrack):
 
                 indices, bbox, classIds, confs = findObjects(outputs, img)
 
+                result_list = []
+
                 for i in indices:
                     i = i[0]
                     box = bbox[i]
@@ -161,19 +177,210 @@ class VideoTransformTrack(MediaStreamTrack):
                     cv2.rectangle(img, (x,y), (x+w, y+h), (255, 0, 255), 2)
                     cv2.putText(img, f'{classNames[classIds[i]].upper()} {int(confs[i]*100)}%', 
                         (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,0,255), 2)
-                    print(f'{classNames[classIds[i]].upper()} {int(confs[i]*100)}% (x, y, w, h) = ({x}, {y}, {w}, {h})')
-                
+                    # print(f'{classNames[classIds[i]].upper()} {int(confs[i]*100)}% (x, y, w, h) = ({x}, {y}, {w}, {h})')
+                    result_list.append({
+                            "tag": classNames[classIds[i]].upper(),
+                            "confidence": int(confs[i]*100),
+                            "x": x,
+                            "y": y,
+                            "w": w,
+                            "h": h
+                        })
+                    
+                # cv2.imshow('frame', img)
+                # cv2.waitKey(10)
                 new_frame = VideoFrame.from_ndarray(img, format="bgr24")
                 new_frame.pts = frame.pts
                 new_frame.time_base = frame.time_base
 
+                if q.full():
+                    print(q.get())
+                    # q.get()
+                q.put(result_list)
+
+                # print('Frame - execution time : ', (time.time() - start_time))
+                
                 return new_frame
             else:
-                self.count = 0
+                self.count += 1
+                if self.count == 2:
+                    self.count = 0
                 return frame
         else:
             return frame
 
+
+# -------- janus --------- #
+def transaction_id():
+    return ("aiortc-" + str(randint(0, 10000)))
+
+class JanusPlugin:
+    def __init__(self, session, url):
+        self._queue = asyncio.Queue()
+        self._session = session
+        self._url = url
+
+    async def send(self, payload):
+        message = {"janus": "message", "transaction": transaction_id()}
+        message.update(payload)
+        async with self._session._http.post(self._url, json=message) as response:
+            data = await response.json()
+            assert data["janus"] == "ack"
+
+        response = await self._queue.get()
+        assert response["transaction"] == message["transaction"]
+        return response
+
+class JanusSession:
+    def __init__(self, url):
+        self._http = None
+        self._poll_task = None
+        self._plugins = {}
+        self._root_url = url
+        self._session_url = None
+
+    async def attach(self, plugin_name: str) -> JanusPlugin:
+        message = {
+            "janus": "attach",
+            "plugin": plugin_name,
+            "transaction": transaction_id(),
+        }
+        async with self._http.post(self._session_url, json=message) as response:
+            data = await response.json()
+            assert data["janus"] == "success"
+            plugin_id = data["data"]["id"]
+            plugin = JanusPlugin(self, self._session_url + "/" + str(plugin_id))
+            self._plugins[plugin_id] = plugin
+            return plugin
+
+    async def create(self):
+        self._http = aiohttp.ClientSession()
+        message = {"janus": "create", "transaction": transaction_id()}
+        async with self._http.post(self._root_url, json=message) as response:
+            data = await response.json()
+            assert data["janus"] == "success"
+            session_id = data["data"]["id"]
+            self._session_url = self._root_url + "/" + str(session_id)
+
+        self._poll_task = asyncio.ensure_future(self._poll())
+
+    async def destroy(self):
+        if self._poll_task:
+            self._poll_task.cancel()
+            self._poll_task = None
+
+        if self._session_url:
+            message = {"janus": "destroy", "transaction": transaction_id()}
+            async with self._http.post(self._session_url, json=message) as response:
+                data = await response.json()
+                assert data["janus"] == "success"
+            self._session_url = None
+
+        if self._http:
+            await self._http.close()
+            self._http = None
+
+    async def _poll(self):
+        while True:
+            params = {"maxev": 1, "rid": int(time.time() * 1000)}
+            async with self._http.get(self._session_url, params=params) as response:
+                data = await response.json()
+                if data["janus"] == "event":
+                    plugin = self._plugins.get(data["sender"], None)
+                    if plugin:
+                        await plugin._queue.put(data)
+                    else:
+                        print(data)
+
+async def publish(plugin, pc_id):
+    """
+    Send video to the room.
+    """
+    pc = RTCPeerConnection()
+    pcs.add(pc)
+
+    # configure media
+    # media = {"audio": False, "video": True}
+    # if player and player.audio:
+    #     pc.addTrack(player.audio)
+    #     media["audio"] = True
+
+    # if player and player.video:
+    #     pc.addTrack(player.video)
+    # else:
+    #     pc.addTrack(VideoStreamTrack())
+
+    pc.addTrack(audio_track_dict[pc_id])
+    pc.addTrack(video_track_dict[pc_id])
+
+    # send offer
+    await pc.setLocalDescription(await pc.createOffer())
+    request = {"request": "configure"}
+    # request.update(media)
+    response = await plugin.send(
+        {
+            "body": request,
+            "jsep": {
+                "sdp": pc.localDescription.sdp,
+                "trickle": False,
+                "type": pc.localDescription.type,
+            },
+        }
+    )
+
+    # apply answer
+    await pc.setRemoteDescription(
+        RTCSessionDescription(
+            sdp=response["jsep"]["sdp"], type=response["jsep"]["type"]
+        )
+    )
+
+async def subscribe(session, room, feed, recorder, pc_id):
+    pc = RTCPeerConnection()
+    pcs.add(pc)
+    pc_dict[pc_id] = pc
+
+    @pc.on("track")
+    async def on_track(track):
+        print("Track %s received" % track.kind)
+        if track.kind == "video":
+            local_video = VideoTransformTrack(
+                track, transform="object-detection"
+            )
+            # recorder.addTrack(local_video)
+            print('track id: ', track.id)
+            video_track_dict[pc_id] = local_video
+            # pc_videoTrackId_dict[track.id] = pc_id
+        if track.kind == "audio":
+            # recorder.addTrack(track)
+            audio_track_dict[pc_id] = track
+
+    # subscribe
+    plugin = await session.attach("janus.plugin.videoroom")
+    response = await plugin.send(
+        {"body": {"request": "join", "ptype": "subscriber", "room": room, "feed": feed}}
+    )
+    print(response)
+    # apply offer
+    await pc.setRemoteDescription(
+        RTCSessionDescription(
+            sdp=response["jsep"]["sdp"], type=response["jsep"]["type"]
+        )
+    )
+
+    # send answer
+    await pc.setLocalDescription(await pc.createAnswer())
+    response = await plugin.send(
+        {
+            "body": {"request": "start"},
+            "jsep": {
+                "sdp": pc.localDescription.sdp,
+                "trickle": False,
+                "type": pc.localDescription.type,
+            },
+        }
+    )
+    await recorder.start()
 
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
@@ -291,6 +498,10 @@ async def offer(request):
         ),
     )
 
+# 
+def channel_log(channel, t, message):
+    print("channel(%s) %s %s" % (channel.label, t, message))
+
 # not reflect now (for performance issue)
 # track can only provide to one reader
 # the reader will read frame in track
@@ -337,6 +548,14 @@ async def offer_reflect(request):
         if pc.iceConnectionState == "failed":
             await pc.close()
             pcs.discard(pc)
+        
+    @pc.on("datachannel")
+    def on_datachannel(channel):
+        channel_log(channel, "-", "created by remote party")
+        
+        @channel.on("message")
+        def on_message(message):
+            channel_log(channel, "<", message)
 
     @pc.on("track")
     def on_track(track):
@@ -389,6 +608,114 @@ async def offer_reflect(request):
             {"sdp": pc.localDescription.sdp, "type": pc.localDescription.type}
         ),
     )
+
+async def subscribe_to_janus(request):
+
+    roomId = -1
+    feedId = -1
+
+    try:
+        roomId = request.query['roomId']
+    except:
+        return web.Response(
+            content_type="application/json",
+            text=json.dumps(
+                {"error": "invalid roomId"}
+            ),
+        )
+    
+    try:
+        feedId = request.query['feedId']
+    except:
+        return web.Response(
+            content_type="application/json",
+            text=json.dumps(
+                {"error": "invalid roomId"}
+            ),
+        )
+    roomId = int(roomId)
+    feedId = int(feedId)
+    # pc_id = "Hololens(%s)" % uuid.uuid4()
+    pc_id = feedId
+    
+    # transaction = "aiortc-" + str(randint(0, 10000))
+
+    # feedId to a session
+
+    session = JanusSession(JANUS_SERVER)
+    await session.create()
+    plugin = await session.attach("janus.plugin.videoroom")
+
+    recorder = MediaRecorder('/Users/hs/Documents/GitHub/aiortc-webrtc-server/server/file.mp4')
+
+    await subscribe(session=session, room=roomId, feed=feedId, recorder=recorder, pc_id=pc_id)
+
+    print("subscribe finish")
+    print("publish video after object detection using ", pc_id)
+
+    response = await plugin.send(
+        {
+            "body": {
+                "display": "aiortc",
+                "ptype": "publisher",
+                "request": "join",
+                "room": roomId,
+            }
+        }
+    )
+    publishers = response["plugindata"]["data"]["publishers"]
+    for publisher in publishers:
+        print("id: %(id)s, display: %(display)s" % publisher)
+
+    await publish(plugin=plugin, pc_id=pc_id)
+
+    return web.Response(
+        content_type="application/json",
+        text=json.dumps(
+            {"message": "test"}
+        ),
+    )
+
+async def aiortc_get_result(request):
+
+    roomId = -1
+    feedId = -1
+
+    try:
+        roomId = request.query['roomId']
+    except:
+        return web.Response(
+            content_type="application/json",
+            text=json.dumps(
+                {"error": "invalid roomId"}
+            ),
+        )
+    
+    try:
+        feedId = request.query['feedId']
+    except:
+        return web.Response(
+            content_type="application/json",
+            text=json.dumps(
+                {"error": "invalid roomId"}
+            ),
+        )
+    roomId = int(roomId)
+    feedId = int(feedId)
+    # pc_id = "Hololens(%s)" % uuid.uuid4()
+    
+    output = []
+    temp_q = q
+    while not temp_q.empty():
+        output.append(temp_q.get())
+    
+    return web.Response(
+        content_type="application/json",
+        text=json.dumps(
+            {"message": output}
+        ),
+    )
+    
 
 async def offer_receive_only(request):
     params = await request.json()
@@ -508,6 +835,10 @@ if __name__ == "__main__":
     cors.add(app.router.add_get('/index.js', javascript), header)
     cors.add(app.router.add_post("/offer", offer), header)
     cors.add(app.router.add_post("/offer_reflect", offer_reflect), header)
+
+    cors.add(app.router.add_get("/subscribe_to_janus", subscribe_to_janus), header)
+    cors.add(app.router.add_get("/aiortc-get-result", aiortc_get_result), header)
+
     cors.add(app.router.add_post("/offer_receive_only", offer_receive_only), header)
     cors.add(app.router.add_get("/test", test), header)
     cors.add(app.router.add_get("/getPeerList", getPeerList), header)
