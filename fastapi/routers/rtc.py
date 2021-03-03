@@ -13,6 +13,7 @@ class Params(BaseModel):
 
 router = APIRouter(
     prefix="/api/v1/rtc",
+    tags=["rtc"]
 )
 
 @router.post("/offer_reflect")
@@ -26,26 +27,16 @@ async def offer_reflect(params: Params):
 
     pc = RTCPeerConnection()
     pc_id = "PeerConnection(%s)" % uuid.uuid4()
-    
-    # pcs.add(pc)
-    # id_list.append(pc_id)
-    # name_dict[pc_id] = name
-    # pc_dict[pc_id] = pc
 
     @pc.on("iceconnectionstatechange")
     async def on_iceconnectionstatechange():
         print("ICE connection state is %s", pc.iceConnectionState)
         if pc.iceConnectionState == "failed":
             await pc.close()
-            # pcs.discard(pc)
-        
-    # @pc.on("datachannel")
-    # def on_datachannel(channel):
-    #     channel_log(channel, "-", "created by remote party")
-        
-    #     @channel.on("message")
-    #     def on_message(message):
-    #         channel_log(channel, "<", message)
+    
+    @pc.on("connectionstatechange")
+    async def on_connectionstatechange():
+        print("connection state is %s", pc.connectionState)
 
     @pc.on("track")
     def on_track(track):
@@ -65,11 +56,9 @@ async def offer_reflect(params: Params):
             print("Track %s ended", track.kind)
             await pc.close()
 
-    # handle offer
     await pc.setRemoteDescription(offer)
     # await recorder.start()
 
-    # send answer
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
 
