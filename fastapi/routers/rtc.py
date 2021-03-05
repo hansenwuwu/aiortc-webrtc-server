@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from aiortc import RTCPeerConnection, RTCSessionDescription, MediaStreamTrack
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder
 import uuid
-from tools.videoTransformTrack import VideoTransformTrack
+from tools.videoTransformTrack import VideoTransformTrack, RetrieveResults
 from tools.janus import JanusSession
 import aiohttp
 
@@ -125,6 +125,24 @@ async def subscribe_to_janus(room: int = -1, publishId: int = -1, mode='janus'):
     json_compatible_item_data = jsonable_encoder({'message': 'success'})
     return JSONResponse(content=json_compatible_item_data)
 
+'''
+    get ai results using peerId
+'''
+@router.get("/results/{peerId}")
+async def results(peerId=-1):
+    if peerId == -1:
+        json_compatible_item_data = jsonable_encoder({'message': 'no such peerId'})
+        return JSONResponse(content=json_compatible_item_data)
+    
+    output = RetrieveResults(peerId)
+    if output == False:
+        json_compatible_item_data = jsonable_encoder({'message': 'no connection or no detection'})
+        return JSONResponse(content=json_compatible_item_data)
+    else:
+        json_compatible_item_data = jsonable_encoder({'output': output})
+        return JSONResponse(content=json_compatible_item_data)
+
+
 async def subscribe(session, room, publishId, peerId, recorder=None ):
     pc = RTCPeerConnection()
     pcs.add(pc)
@@ -145,7 +163,7 @@ async def subscribe(session, room, publishId, peerId, recorder=None ):
         print("%s Track %s received" % ( subscribeId, track.kind))
         if track.kind == "video":
             local_video = VideoTransformTrack(
-                track, transform="object-detection"
+                track, transform="object-detection", peerId=peerId
             )
             if recorder != None:
                 recorder.addTrack(local_video)
@@ -160,7 +178,8 @@ async def subscribe(session, room, publishId, peerId, recorder=None ):
         @track.on("ended")
         async def on_ended():
             print("%s Track %s ended" % (subscribeId, track.kind))
-            await recorder.stop()
+            if recorder != None:
+                await recorder.stop()
     
     plugin = await session.attach("janus.plugin.videoroom")
     response = await plugin.send(
@@ -219,7 +238,6 @@ async def publish(plugin, peerId):
             sdp=response["jsep"]["sdp"], type=response["jsep"]["type"]
         )
     )
-
 
 async def onShutdown():
     for pc in pcs:

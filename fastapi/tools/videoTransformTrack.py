@@ -3,6 +3,7 @@ import time
 import cv2
 import numpy as np
 from av import VideoFrame
+import queue
 
 whT = 320
 
@@ -39,6 +40,11 @@ def findObjects(outputs, img):
     indices = cv2.dnn.NMSBoxes(bbox, confs, 0.5, 0.3)
     return indices, bbox, classIds, confs
 
+'''
+    Saving detect data
+'''
+ObjectDetectionResult = {}
+
 class VideoTransformTrack(MediaStreamTrack):
     """
     A video stream track that transforms frames from an another track.
@@ -46,8 +52,9 @@ class VideoTransformTrack(MediaStreamTrack):
 
     kind = "video"
 
-    def __init__(self, track, transform):
+    def __init__(self, track, transform, peerId):
         super().__init__()  # don't forget this!
+        self.peerId = peerId
         self.track = track
         self.transform = transform
         self.count = 0
@@ -110,6 +117,7 @@ class VideoTransformTrack(MediaStreamTrack):
         elif self.transform == "object-detection":
 
             if self.count == 0:
+                print(self.peerId, ' - detecting')
                 start_time = time.time()
                 self.count = 1
                 img = frame.to_ndarray(format="bgr24")
@@ -148,12 +156,14 @@ class VideoTransformTrack(MediaStreamTrack):
                 new_frame.pts = frame.pts
                 new_frame.time_base = frame.time_base
 
-                # if q.full():
-                #     print(q.get())
-                #     # q.get()
-                # q.put(result_list)
-
-                # print('Frame - execution time : ', (time.time() - start_time))
+                if str(self.peerId) not in ObjectDetectionResult:
+                    print('init')
+                    ObjectDetectionResult[str(self.peerId)] = queue.Queue(maxsize=10)
+                else:
+                    if ObjectDetectionResult[str(self.peerId)].full():
+                        temp = ObjectDetectionResult[str(self.peerId)].get()
+                    ObjectDetectionResult[str(self.peerId)].put(result_list)
+                    # print(result_list)
                 
                 return new_frame
             else:
@@ -163,3 +173,22 @@ class VideoTransformTrack(MediaStreamTrack):
                 return frame
         else:
             return frame
+
+'''
+    get ai results by peerId
+    todo:
+        - check peer connection of aiortc
+        
+'''
+def RetrieveResults(peerId):
+    if str(peerId) not in ObjectDetectionResult:
+        # check is peer connected
+        return False
+        
+    output = []
+    tempQueue = ObjectDetectionResult[str(peerId)]
+    while not tempQueue.empty():
+        output.append(tempQueue.get())
+    ObjectDetectionResult[str(peerId)].queue.clear()
+
+    return output
