@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from routers import rtc, websocket
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 app = FastAPI()
 
@@ -66,3 +67,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int):
 async def shutdown_event():
     await rtc.onShutdown()
     print('shutdown')
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
