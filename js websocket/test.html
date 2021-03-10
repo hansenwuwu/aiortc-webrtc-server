@@ -1,0 +1,74 @@
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
+        integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+
+        $(function () {
+            $('#upload').change(async function () {
+                var input = this;
+                var url = $(this).val();
+                var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
+                if (input.files && input.files[0] && (ext == "gif" || ext == "png" || ext == "jpeg" || ext == "jpg")) {
+                    var reader = new FileReader();
+
+                    reader.onload = function (e) {
+                        $('#img').attr('src', e.target.result);
+                        console.log(e.target.result)
+                        testSend(e.target.result);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+
+                }
+                else {
+                    $('#img').attr('src', '/assets/no_preview.png');
+                }
+            });
+
+        });
+
+        let ws = new WebSocket('ws://localhost:5000/ws/2468')
+
+        ws.onopen = () => {
+            console.log('open connection')
+        }
+
+        ws.onclose = () => {
+            console.log('close connection')
+        }
+
+        //接收 Server 發送的訊息
+        ws.onmessage = event => {
+            console.log(event)
+        }
+
+        function testSend(content) {
+            let data = {
+                send_to: '1357',
+                content: content
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        // const fileUploader = document.querySelector('#upload');
+
+        // fileUploader.addEventListener('change', (e) => {
+        //     console.log(e.target.files); // get file object
+        // });
+
+    </script>
+</head>
+
+<body>
+    <h1>socket io</h1>
+    <button onclick="testSend('call')">
+        Send text
+    </button>
+
+    <input type="file" id="upload" name="upload" accept="image/png, image/jpeg">
+    <img id="img" src="#" alt="your image" />
+</body>
+
+</html>
