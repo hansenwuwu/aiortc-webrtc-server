@@ -1,6 +1,6 @@
 FROM python:3.7
 
-COPY ./fastapi /app
+COPY ./app /app
 WORKDIR /app
 
 RUN pip install fastapi uvicorn
