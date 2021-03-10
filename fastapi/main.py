@@ -25,8 +25,6 @@ app.include_router(rtc.router)
 async def root():
     return {"message": "Hello World"}
 
-
-
 """
     WebSocket
 """

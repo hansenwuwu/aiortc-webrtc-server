@@ -8,13 +8,13 @@ import copy
 
 whT = 320
 
-classesFile = '../server/yolo/coco.names'
+classesFile = './yolo/coco.names'
 classNames = []
 with open(classesFile, 'rt') as f:
     classNames = f.read().rstrip('\n').split('\n')
 
-modelConfiguration = '../server/yolo/yolov3-tiny.cfg'
-modelWeights = '../server/yolo/yolov3-tiny.weights'
+modelConfiguration = './yolo/yolov3-tiny.cfg'
+modelWeights = './yolo/yolov3-tiny.weights'
 
 net = cv2.dnn.readNetFromDarknet(modelConfiguration, modelWeights)
 net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
