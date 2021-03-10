@@ -72,6 +72,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                 msg = json.loads(data)
                 print(f"Receive from Client #{client_id} send_to: {msg['send_to']} content: {msg['content']}")
                 await manager.send_personal_id_message(msg['content'], msg['send_to'])
+                await manager.send_personal_message(f"You send: {msg['content']} to {msg['send_to']}", websocket)
             except Exception as e:
                 await manager.send_personal_message(f"Something fail", websocket)
             # await manager.broadcast(f"Client #{client_id} says: {data}")
