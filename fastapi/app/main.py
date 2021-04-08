@@ -77,6 +77,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             # await manager.broadcast(f"Client #{client_id} says: {data}")
     except WebSocketDisconnect:
         manager.disconnect(websocket, client_id)
+        print(f"Client #{client_id} left the chat")
         await manager.broadcast(f"Client #{client_id} left the chat")
     
 @app.on_event("shutdown")
