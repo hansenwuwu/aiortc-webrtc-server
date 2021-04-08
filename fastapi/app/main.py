@@ -18,8 +18,7 @@ app = FastAPI()
 #     allow_headers=["*"],
 # )
 
-app.include_router(rtc.router)
-# app.include_router(websocket.router)
+# app.include_router(rtc.router)
 
 @app.get("/")
 async def root():
