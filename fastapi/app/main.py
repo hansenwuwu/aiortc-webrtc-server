@@ -50,12 +50,17 @@ class ConnectionManager:
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
     
-    async def send_personal_id_message(self, message: str, client_id):
-        websocket = self.userWebsocket[client_id]
+    async def send_personal_id_message(self, message: str, receiver_id, sender_id):
+        websocket = self.userWebsocket[receiver_id]
         # print(websocket)
+        output = {
+            'sender': sender_id,
+            "content": message
+        }
+        print(output)
         if websocket == None:
             return
-        await websocket.send_text(message)
+        await websocket.send_text(json.dumps(output))
     
     async def checkOnline(self, client_id, websocket: WebSocket):
         output = []
@@ -89,8 +94,8 @@ async def websocket_endpoint(websocket: WebSocket, device_type: str, client_id: 
                     if msg['type'] == 'online':
                         await manager.checkOnline(client_id, websocket)
                     elif msg['type'] == 'message':
-                        print(f"Receive from Client #{client_id} send_to: {msg['send_to']} content: {msg['content']}")
-                        await manager.send_personal_id_message(msg['value'], msg['receiver'])
+                        print(f"Receive from Client #{client_id} send_to: {msg['receiver']} content: {msg['value']}")
+                        await manager.send_personal_id_message(msg['value'], msg['receiver'], client_id)
                 else:
                     await manager.send_personal_id_message(msg['content'], msg['send_to'])
                     # await manager.send_personal_message(f"You send: {msg['content']} to {msg['send_to']}", websocket)
