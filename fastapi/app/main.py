@@ -24,6 +24,11 @@ app = FastAPI()
 async def root():
     return {"message": "Hello World"}
 
+@app.get("/api/v1/online")
+async def online():
+    output = manager.getOnlineList()
+    return {"online": json.dumps(output)}
+
 """
     WebSocket
 """
@@ -72,6 +77,15 @@ class ConnectionManager:
                 'id': key
             })
         await websocket.send_text(json.dumps(output))
+    
+    def getOnlineList(self):
+        output = []
+        for key, value in self.userWebsocket.items():
+            output.append({
+                'display_name': self.userData[key]["display_name"],
+                'id': key
+            })
+        return output
 
     async def broadcast(self, message: str):
         for connection in self.active_connections:
