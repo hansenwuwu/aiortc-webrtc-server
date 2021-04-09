@@ -29,46 +29,35 @@
 
         });
 
-        let ws = null;
+        let ws = new WebSocket('ws://localhost:5000/ws/js1357')
 
-        function StartConnection() {
-
-            let id = Math.floor(Math.random() * 100000);
-            let name = "ADBCC-" + Math.floor(Math.random() * 100000);
-
-            ws = new WebSocket(`ws://localhost:5000/ws/adbcc/${id}/${name}`)
-
-            ws.onopen = () => {
-                console.log('open connection ', id, name)
-            }
-
-            ws.onclose = () => {
-                console.log('close connection ', id, name)
-            }
-
-            //接收 Server 發送的訊息
-            ws.onmessage = event => {
-                console.log(event.data)
-            }
+        ws.onopen = () => {
+            console.log('open connection')
         }
 
-        function testSend() {
-            let receiver_id = document.getElementById('receiverId').value;
-            console.log(receiver_id);
+        ws.onclose = () => {
+            console.log('close connection')
+        }
+
+        //接收 Server 發送的訊息
+        ws.onmessage = event => {
+            console.log(event)
+        }
+
+        function testSend(content) {
             let data = {
-                type: 'message',
-                receiver: receiver_id,
-                value: {
-                    type: 'call',
-                    value: 'request',
-                }
+                send_to: 'js2468',
+                content: content
             }
             ws.send(JSON.stringify(data));
         }
 
         function checkOnline() {
             let data = {
-                type: "online"
+                type: "message",
+                content: {
+                    type: "online"
+                }
             }
             ws.send(JSON.stringify(data));
         }
@@ -84,11 +73,7 @@
 
 <body>
     <h1>WebSocket</h1>
-    <button onclick="StartConnection()">
-        Start connection
-    </button>
-
-    <button onclick="testSend()">
+    <button onclick="testSend('call')">
         Send text
     </button>
 
@@ -98,8 +83,6 @@
 
     <input type="file" id="upload" name="upload" accept="image/png, image/jpeg">
     <img id="img" src="#" alt="your image" />
-
-    <input type="text" id="receiverId" />
 </body>
 
 </html>
