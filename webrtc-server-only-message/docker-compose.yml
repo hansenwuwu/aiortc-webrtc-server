@@ -15,6 +15,5 @@ services:
       - "7088:7088"
       - "7089:7089"
     volumes:
-      - "./etc/janus/janus.jcfg:/usr/local/etc/janus/janus.jcfg"
-      - "./etc/janus/janus.eventhandler.sampleevh.jcfg:/usr/local/etc/janus/janus.eventhandler.sampleevh.jcfg"
+      - "./etc/janus:/usr/local/etc/janus"
     restart: always
