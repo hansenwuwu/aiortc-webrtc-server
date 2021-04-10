@@ -6,7 +6,7 @@ services:
   #
   janus-gateway:
     image: 'canyan/janus-gateway:latest'
-    command: ["/usr/local/bin/janus --nat-1-1=18.181.179.94", "-F", "/usr/local/etc/janus"]
+    command: ["/usr/local/bin/janus --nat-1-1='18.181.179.94'", "-F", "/usr/local/etc/janus"]
     ports:
       - "8088:8088"
       - "8089:8089"
