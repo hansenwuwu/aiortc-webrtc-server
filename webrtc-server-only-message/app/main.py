@@ -60,7 +60,9 @@ class ConnectionManager:
         # print(websocket)
         output = {
             'type': "message",
-            'sender': sender_id,
+            'sender_id': sender_id,
+            'sender_name': self.userData[sender_id]['display_name'],
+            'sender_type': self.userData[sender_id]['device_type'],
             "value": message
         }
         print(output)
