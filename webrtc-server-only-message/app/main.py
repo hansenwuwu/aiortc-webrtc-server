@@ -30,7 +30,7 @@ async def online():
     output = {
         'online': online_list
     }
-    return json.dumps(output)
+    return output
 
 """
     WebSocket
@@ -60,7 +60,8 @@ class ConnectionManager:
     
     async def send_personal_id_message(self, message: str, receiver_id, sender_id):
         websocket = self.userWebsocket[receiver_id]
-        # print(websocket)
+        if websocket == None:
+            return
         output = {
             'type': "message",
             'sender_id': sender_id,
@@ -68,9 +69,6 @@ class ConnectionManager:
             'sender_type': self.userData[sender_id]['device_type'],
             "value": message
         }
-        print(output)
-        if websocket == None:
-            return
         await websocket.send_text(json.dumps(output))
     
     def getOnlineList(self):
