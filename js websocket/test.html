@@ -36,8 +36,8 @@
             let id = Math.floor(Math.random() * 100000);
             let name = "ADBCC-" + Math.floor(Math.random() * 100000);
 
-            // ws = new WebSocket(`ws://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:5000/ws/adbcc/${id}/${name}`)
-            ws = new WebSocket(`ws://localhost:5000/ws/adbcc/${id}/${name}`)
+            ws = new WebSocket(`ws://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:5000/ws/adbcc/${id}/${name}`)
+            // ws = new WebSocket(`ws://localhost:5000/ws/adbcc/${id}/${name}`)
 
             ws.onopen = () => {
                 console.log('open connection ', id, name)
@@ -53,15 +53,17 @@
             }
         }
 
-        function testSend() {
+        function sendRequest() {
             let receiver_id = document.getElementById('receiverId').value;
-            console.log(receiver_id);
+            let publish_id = document.getElementById('publishId').value;
+            console.log(receiver_id, publish_id);
             let data = {
                 type: 'message',
                 receiver: receiver_id,
                 value: {
                     type: 'call',
                     value: 'request',
+                    publishId: publish_id
                 }
             }
             ws.send(JSON.stringify(data));
@@ -70,6 +72,191 @@
         function checkOnline() {
             let data = {
                 type: "online"
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendYes() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let publish_id = document.getElementById('publishId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'call',
+                    value: 'yes',
+                    publishId: publish_id
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendNo() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'call',
+                    value: 'no',
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendHangup() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'call',
+                    value: 'hangup',
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendMarkerArrowRed() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: {
+                        type: "arrow",
+                        color: "red",
+                        Lpos: {
+                            x: 500,
+                            y: 500
+                        },
+                        Rpos: {
+                            x: 500,
+                            y: 500
+                        }
+                    }
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendMarkerArrowBlue() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: {
+                        type: "arrow",
+                        color: "blue",
+                        Lpos: {
+                            x: 500,
+                            y: 500
+                        },
+                        Rpos: {
+                            x: 500,
+                            y: 500
+                        }
+                    }
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendMarkerArrowWhite() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: {
+                        type: "arrow",
+                        color: "white",
+                        Lpos: {
+                            x: 500,
+                            y: 500
+                        },
+                        Rpos: {
+                            x: 500,
+                            y: 500
+                        }
+                    }
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendMarkerFrameRed() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: {
+                        type: "frame",
+                        color: "red",
+                        Lpos: {
+                            x: 500,
+                            y: 500
+                        },
+                        Rpos: {
+                            x: 700,
+                            y: 700
+                        }
+                    }
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendMarkerFrameBlue() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: {
+                        type: "frame",
+                        color: "blue",
+                        Lpos: {
+                            x: 500,
+                            y: 500
+                        },
+                        Rpos: {
+                            x: 700,
+                            y: 700
+                        }
+                    }
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendMarkerFrameWhite() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: {
+                        type: "frame",
+                        color: "white",
+                        Lpos: {
+                            x: 500,
+                            y: 500
+                        },
+                        Rpos: {
+                            x: 700,
+                            y: 700
+                        }
+                    }
+                }
             }
             ws.send(JSON.stringify(data));
         }
@@ -89,18 +276,58 @@
         Start connection
     </button>
 
-    <button onclick="testSend()">
-        Send text
+    <button onclick="sendRequest()">
+        Send request
     </button>
 
     <button onclick="checkOnline()">
         Check online
     </button>
 
+    <button onclick="sendYes()">
+        Send yes
+    </button>
+
+    <button onclick="sendNo()">
+        Send no
+    </button>
+
+    <button onclick="sendHangup()">
+        Send hangup
+    </button>
+
+    <button onclick="sendMarkerArrowRed()">
+        Send marker (arrow, red)
+    </button>
+
+    <button onclick="sendMarkerArrowBlue()">
+        Send marker (arrow, blue)
+    </button>
+
+    <button onclick="sendMarkerArrowWhite()">
+        Send marker (arrow, white)
+    </button>
+
+    <button onclick="sendMarkerFrameRed()">
+        Send marker (frame, red)
+    </button>
+
+    <button onclick="sendMarkerFrameBlue()">
+        Send marker (frame, blue)
+    </button>
+
+    <button onclick="sendMarkerFrameWhite()">
+        Send marker (frame, white)
+    </button>
+
     <input type="file" id="upload" name="upload" accept="image/png, image/jpeg">
     <img id="img" src="#" alt="your image" />
 
+    <label>send to id</label>
     <input type="text" id="receiverId" />
+
+    <label>publishId</label>
+    <input type="text" id="publishId" />
 </body>
 
 </html>
