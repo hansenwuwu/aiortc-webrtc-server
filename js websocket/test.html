@@ -17,7 +17,7 @@
                     reader.onload = function (e) {
                         $('#img').attr('src', e.target.result);
                         console.log(e.target.result)
-                        testSend(e.target.result);
+                        sendImage(e.target.result);
                     }
                     reader.readAsDataURL(input.files[0]);
 
@@ -274,6 +274,45 @@
             ws.send(JSON.stringify(data));
         }
 
+        function sendClearMarker() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'marker',
+                    value: 'empty'
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendImage(str) {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'image',
+                    value: str
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
+        function sendClearImage() {
+            let receiver_id = document.getElementById('receiverId').value;
+            let data = {
+                type: 'message',
+                receiver: receiver_id,
+                value: {
+                    type: 'image',
+                    value: 'empty'
+                }
+            }
+            ws.send(JSON.stringify(data));
+        }
+
         // const fileUploader = document.querySelector('#upload');
 
         // fileUploader.addEventListener('change', (e) => {
@@ -331,6 +370,14 @@
 
     <button onclick="sendMarkerFrameWhite()">
         Send marker (frame, white)
+    </button>
+
+    <button onclick="sendClearMarker()">
+        Send clear marker
+    </button>
+
+    <button onclick="sendClearImage()">
+        Send clear image
     </button>
 
     <input type="file" id="upload" name="upload" accept="image/png, image/jpeg">
