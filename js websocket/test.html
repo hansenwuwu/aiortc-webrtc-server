@@ -124,18 +124,20 @@
                 receiver: receiver_id,
                 value: {
                     type: 'marker',
-                    value: {
-                        type: "arrow",
-                        color: "red",
-                        Lpos: {
-                            x: 500,
-                            y: 500
-                        },
-                        Rpos: {
-                            x: 500,
-                            y: 500
+                    value: [
+                        {
+                            type: "arrow",
+                            color: "red",
+                            Lpos: {
+                                x: 500,
+                                y: 500
+                            },
+                            Rpos: {
+                                x: 500,
+                                y: 500
+                            }
                         }
-                    }
+                    ]
                 }
             }
             ws.send(JSON.stringify(data));
@@ -146,20 +148,23 @@
             let data = {
                 type: 'message',
                 receiver: receiver_id,
-                value: {
+                value:
+                {
                     type: 'marker',
-                    value: {
-                        type: "arrow",
-                        color: "blue",
-                        Lpos: {
-                            x: 500,
-                            y: 500
-                        },
-                        Rpos: {
-                            x: 500,
-                            y: 500
+                    value: [
+                        {
+                            type: "arrow",
+                            color: "blue",
+                            Lpos: {
+                                x: 500,
+                                y: 500
+                            },
+                            Rpos: {
+                                x: 500,
+                                y: 500
+                            }
                         }
-                    }
+                    ]
                 }
             }
             ws.send(JSON.stringify(data));
@@ -172,18 +177,20 @@
                 receiver: receiver_id,
                 value: {
                     type: 'marker',
-                    value: {
-                        type: "arrow",
-                        color: "white",
-                        Lpos: {
-                            x: 500,
-                            y: 500
-                        },
-                        Rpos: {
-                            x: 500,
-                            y: 500
+                    value: [
+                        {
+                            type: "arrow",
+                            color: "white",
+                            Lpos: {
+                                x: 500,
+                                y: 500
+                            },
+                            Rpos: {
+                                x: 500,
+                                y: 500
+                            }
                         }
-                    }
+                    ]
                 }
             }
             ws.send(JSON.stringify(data));
@@ -196,18 +203,20 @@
                 receiver: receiver_id,
                 value: {
                     type: 'marker',
-                    value: {
-                        type: "frame",
-                        color: "red",
-                        Lpos: {
-                            x: 500,
-                            y: 500
-                        },
-                        Rpos: {
-                            x: 700,
-                            y: 700
+                    value: [
+                        {
+                            type: "frame",
+                            color: "red",
+                            Lpos: {
+                                x: 500,
+                                y: 500
+                            },
+                            Rpos: {
+                                x: 700,
+                                y: 700
+                            }
                         }
-                    }
+                    ]
                 }
             }
             ws.send(JSON.stringify(data));
@@ -220,18 +229,20 @@
                 receiver: receiver_id,
                 value: {
                     type: 'marker',
-                    value: {
-                        type: "frame",
-                        color: "blue",
-                        Lpos: {
-                            x: 500,
-                            y: 500
-                        },
-                        Rpos: {
-                            x: 700,
-                            y: 700
+                    value: [
+                        {
+                            type: "frame",
+                            color: "blue",
+                            Lpos: {
+                                x: 500,
+                                y: 500
+                            },
+                            Rpos: {
+                                x: 700,
+                                y: 700
+                            }
                         }
-                    }
+                    ]
                 }
             }
             ws.send(JSON.stringify(data));
@@ -244,18 +255,20 @@
                 receiver: receiver_id,
                 value: {
                     type: 'marker',
-                    value: {
-                        type: "frame",
-                        color: "white",
-                        Lpos: {
-                            x: 500,
-                            y: 500
-                        },
-                        Rpos: {
-                            x: 700,
-                            y: 700
+                    value: [
+                        {
+                            type: "frame",
+                            color: "white",
+                            Lpos: {
+                                x: 500,
+                                y: 500
+                            },
+                            Rpos: {
+                                x: 700,
+                                y: 700
+                            }
                         }
-                    }
+                    ]
                 }
             }
             ws.send(JSON.stringify(data));
