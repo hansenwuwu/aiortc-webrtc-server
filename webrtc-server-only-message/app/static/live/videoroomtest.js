@@ -36,11 +36,39 @@ $(document).ready(function () {
 	Janus.init({
 		debug: "all", callback: function () {
 
-			// get online list
-			const url = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:5000/api/v1/online";
-			$.get(url, function (data) {
-				console.log('online list: ', data);
-			});
+			janus = new Janus(
+				{
+					server: server,
+					success: function () {
+						// get online list
+						const url = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:5000/api/v1/online";
+						$.get(url, function (data) {
+							console.log('online list: ', data);
+							// $('#onlineList').empty();
+							(data.online).forEach(element => {
+								console.log(element);
+								if (element.device_type == 'hmd') {
+									$('#onlineList').append(`<button id=${element.id}>${element.display_name}</button>`);
+									$(`#${element.id}`).click(function () {
+										console.log(element.publishId);
+										newRemoteFeed(parseInt(element.publishId), element.display_name, "", "");
+									});
+								}
+							});
+						});
+					},
+					error: function (error) {
+						Janus.error(error);
+						bootbox.alert(error, function () {
+							window.location.reload();
+						});
+					},
+					destroyed: function () {
+						window.location.reload();
+					}
+				});
+
+
 
 			// Use a button to start the demo
 			$('#start').one('click', function () {
@@ -450,6 +478,14 @@ function unpublishOwnFeed() {
 }
 
 function newRemoteFeed(id, display, audio, video) {
+	$('#details').remove();
+	$('#videos').removeClass('hide').show();
+
+	$('#start').removeClass('hide').show().html("Stop")		// register stop button function
+		.click(function () {
+			$(this).attr('disabled', true);
+			janus.destroy();
+		});
 	// A new feed has been published, create a new plugin handle and attach to it as a subscriber
 	var remoteFeed = null;
 	janus.attach(
@@ -468,24 +504,13 @@ function newRemoteFeed(id, display, audio, video) {
 					ptype: "subscriber",
 					feed: id
 				};
-				// In case you don't want to receive audio, video or data, even if the
-				// publisher is sending them, set the 'offer_audio', 'offer_video' or
-				// 'offer_data' properties to false (they're true by default), e.g.:
-				// 		subscribe["offer_video"] = false;
-				// For example, if the publisher is VP8 and this is Safari, let's avoid video
-				// if (Janus.webRTCAdapter.browserDetails.browser === "safari" &&
-				// 	(video === "vp9" || (video === "vp8" && !Janus.safariVp8))) {
-				// 	if (video)
-				// 		video = video.toUpperCase()
-				// 	toastr.warning("Publisher is using " + video + ", but Safari doesn't support it: disabling video");
-				// 	subscribe["offer_video"] = false;
-				// }
-				// remoteFeed.videoCodec = video;
 				remoteFeed.send({ message: subscribe });
 			},
 			error: function (error) {
 				Janus.error("  -- Error attaching plugin...", error);
 				bootbox.alert("Error attaching plugin... " + error);
+				// go back to main page
+				window.location.reload();
 			},
 			onmessage: function (msg, jsep) {
 				Janus.debug(" ::: Got a message (subscriber) :::", msg);
@@ -493,6 +518,8 @@ function newRemoteFeed(id, display, audio, video) {
 				Janus.debug("Event: " + event);
 				if (msg["error"]) {
 					bootbox.alert(msg["error"]);
+					// go back to main page
+					window.location.reload();
 				} else if (event) {
 					if (event === "attached") {
 						// Subscriber created and attached
@@ -504,7 +531,8 @@ function newRemoteFeed(id, display, audio, video) {
 							}
 						}
 						remoteFeed.rfid = msg["id"];
-						remoteFeed.rfdisplay = msg["display"];
+						// remoteFeed.rfdisplay = msg["display"];
+						remoteFeed.rfdisplay = display;
 						if (!remoteFeed.spinner) {
 							var target = document.getElementById('videoremote' + remoteFeed.rfindex);
 							remoteFeed.spinner = new Spinner({ top: 100 }).spin(target);

@@ -45,16 +45,18 @@
 			<div class="col-md-12">
 				<div class="page-header">
 					<h1>Expert Assist live stream
-						<button class="btn btn-default" autocomplete="off" id="start">Start</button>
+						<button class="btn btn-default hide" autocomplete="off" id="start">Start</button>
 					</h1>
 				</div>
 				<div class="container" id="details">
 					<div class="row">
 						<div class="col-md-12">
 							<h3>Online list</h3>
-							<button>HL1</button>
-							<button>HL1</button>
-							<button>HL1</button>
+						</div>
+						<div class="col-md-12">
+							<div id="onlineList" class="row"
+								style="display:flex; flex-direction: column; width: 500px;">
+							</div>
 						</div>
 					</div>
 				</div>
@@ -79,7 +81,7 @@
 				</div>
 				<div class="container hide" id="videos">
 					<div class="row">
-						<div class="col-md-4">
+						<!-- <div class="col-md-4">
 							<div class="panel panel-default">
 								<div class="panel-heading">
 									<h3 class="panel-title">Local Video <span class="label label-primary hide"
@@ -105,17 +107,17 @@
 								</div>
 								<div class="panel-body" id="videolocal"></div>
 							</div>
-						</div>
-						<div class="col-md-4">
+						</div> -->
+						<div class="col-md-12">
 							<div class="panel panel-default">
 								<div class="panel-heading">
-									<h3 class="panel-title">Remote Video #1 <span class="label label-info hide"
-											id="remote1"></span></h3>
+									<h3 class="panel-title"><span class="label label-info hide" id="remote1"></span>
+									</h3>
 								</div>
 								<div class="panel-body relative" id="videoremote1"></div>
 							</div>
 						</div>
-						<div class="col-md-4">
+						<!-- <div class="col-md-4">
 							<div class="panel panel-default">
 								<div class="panel-heading">
 									<h3 class="panel-title">Remote Video #2 <span class="label label-info hide"
@@ -123,9 +125,9 @@
 								</div>
 								<div class="panel-body relative" id="videoremote2"></div>
 							</div>
-						</div>
+						</div> -->
 					</div>
-					<div class="row">
+					<!-- <div class="row">
 						<div class="col-md-4">
 							<div class="panel panel-default">
 								<div class="panel-heading">
@@ -153,7 +155,7 @@
 								<div class="panel-body relative" id="videoremote5"></div>
 							</div>
 						</div>
-					</div>
+					</div> -->
 				</div>
 			</div>
 		</div>
