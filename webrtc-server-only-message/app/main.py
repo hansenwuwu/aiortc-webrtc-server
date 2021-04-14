@@ -41,13 +41,15 @@ class ConnectionManager:
         self.userWebsocket = {}
         self.userData = {}
 
-    async def connect(self, websocket: WebSocket, client_id, device_type, display_name):
+    async def connect(self, websocket: WebSocket, client_id, device_type, display_name, roomId, publishId):
         await websocket.accept()
         self.active_connections.append(websocket)
         self.userWebsocket[client_id] = websocket
         self.userData[client_id] = {
             "display_name": display_name,
-            "device_type": device_type
+            "device_type": device_type,
+            "roomId": roomId,
+            "publishId": publishId
         }
 
     def disconnect(self, websocket: WebSocket, client_id):
@@ -77,7 +79,9 @@ class ConnectionManager:
             output.append({
                 'id': key,
                 'device_type': self.userData[key]["device_type"],
-                'display_name': self.userData[key]["display_name"]
+                'display_name': self.userData[key]["display_name"],
+                'roomId': self.userData[key]["roomId"],
+                'publishId': self.userData[key]["publishId"]
             })
         return output
 
@@ -88,9 +92,9 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@app.websocket("/ws/{device_type}/{client_id}/{display_name}")
-async def websocket_endpoint(websocket: WebSocket, device_type: str, client_id: str, display_name: str):
-    await manager.connect(websocket, client_id, device_type, display_name)
+@app.websocket("/ws/{device_type}/{client_id}/{display_name}/{roomId}/{publishId}")
+async def websocket_endpoint(websocket: WebSocket, device_type: str, client_id: str, display_name: str, roomId="", publishId=""):
+    await manager.connect(websocket, client_id, device_type, display_name, roomId, publishId)
     try:
         while True:
             data = await websocket.receive_text()
