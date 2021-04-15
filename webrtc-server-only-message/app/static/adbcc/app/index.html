@@ -1,0 +1,257 @@
+<html>
+
+<head>
+    <!-- CSS files -->
+    <!-- Bootstrap css -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+        integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <!-- adminlte3 -->
+    <link rel="stylesheet" href="../static/adminlte3/css/adminlte.min.css">
+    <!-- page css -->
+    <link rel="stylesheet" href="index.css">
+    <!-- fontawesome -->
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+        integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css" />
+
+    <!-- Javascript files -->
+    <!-- Jquery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+    <!-- Bootstrap js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.4.0/adapter.min.js"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.4.0/bootbox.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
+
+
+    <script type="text/javascript">
+    </script>
+</head>
+
+<body>
+    <!-- Side navigation -->
+    <div class="sidenav">
+        <a href="#">Expert Assist</a>
+        <a href="#" style="font-size: 14px;">ver 1.0.1</a>
+    </div>
+    <!-- <div class="row">
+        <div class="col-12">
+            <h1>WebSocket</h1>
+            <button onclick="testSend('call')">
+                Send text
+            </button>
+            <button onclick="testOnline()">
+                Online list
+            </button>
+
+            <input type="file" id="upload" name="upload" accept="image/png, image/jpeg">
+            <img id="img" src="#" alt="your image" />
+        </div>
+    </div> -->
+    <div class="main">
+        <div class="row">
+            <div class="col-9 ml-5 mt-4" style="height:80vh">
+                <div id="video_wrapper" class="video-wrapper" style="height:32.5vw;width:57.6vw">
+                    <div class="inside-video-wrapper">
+                        <!-- <img id="video_feed" class="withSpace covered-image" style="height:32.5vw;width:auto;"></img> -->
+                        <div class="covered-image" id="videoremote1" style="height:32.5vw;width:auto;"></div>
+                        <canvas class="covering-canvas" id="draw_canvas"></canvas>
+                        <img id="ADAT_bg" src="../static/image/HMD_1128X636.png"
+                            style="position: absolute;z-index: 3;width: 100%;height: 100%;"></img>
+                    </div>
+                </div>
+                <div class="row">
+                    <!-- Mark area -->
+                    <div class="col-6 mt-4">
+                        <div id="MARK" class="card text-center mark-area" style="visibility:hidden">
+                            <div class="card-header mark-area-head" style="background-color: #E6E6E6;">
+                                <div id="mark_header" style="font-weight: bold;">MARK</div>
+                                <!-- /.card-tools -->
+                            </div>
+                            <div class="card-body mark-area-body">
+                                <div class="container">
+                                    <div class="row justify-content-center">
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img class="mark-img" id="new_arrow_red_img"
+                                                src="../static/image/arrow_red.png"></button>
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="new_arrow_white_img" src="../static/image/arrow_white.png"
+                                                class="mark-img"></button>
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="new_arrow_bluegreen_img" src="../static/image/arrow_blue.png"
+                                                class="mark-img"></button>
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="mark_plus_img" src="../static/image/plus.png"
+                                                class="mark-img"></button>
+                                        <button type="button" id="send_mark_btn" class="btn btn-outline-mark"
+                                            data-dismiss="modal" style="height:35px">Send Marks</button>
+                                    </div>
+                                    <div class="row justify-content-center">
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="new_square_red_img" src="../static/image/square_red.png"
+                                                class="mark-img"></button>
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="new_square_white_img" src="../static/image/square_white.png"
+                                                class="mark-img"></button>
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="new_square_bluegreen_img" src="../static/image/square_blue.png"
+                                                class="mark-img"></button>
+                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                            <img id="mark_minus_img" src="../static/image/minus.png"
+                                                class="mark-img"></button>
+                                        <button type="button" id="clear_mark_btn" class="btn btn-outline-mark"
+                                            data-dismiss="modal" style="height:35px">Clear Marks</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /. Mark Area -->
+                    <!-- Picture Area -->
+                    <div class="col-4 mt-4 ml-5">
+                        <div id="PICTURE" class="card text-center mark-area" style="visibility:hidden">
+                            <div class="card-header mark-area-head" style="background-color: #E6E6E6;">
+                                <div id="picture_header" style="font-weight: bold;">PICTURE</div>
+                                <!-- /.card-tools -->
+                            </div>
+                            <div class="card-body mark-area-body">
+                                <div class="container">
+
+                                    <div class="row justify-content-center mt-2">
+                                        <button type="button" class="btn btn-outline-mark" data-dismiss="modal"
+                                            onclick="document.getElementById('file_input').click()"
+                                            style="height:35px">Add Picture</button>
+                                        <input style="display: none;" type="file" id="file_input">
+                                    </div>
+                                    <div class="row justify-content-center mt-4 mb-2">
+                                        <button type="button" class="btn btn-outline-mark" data-dismiss="modal"
+                                            id="clear_image_btn" style="height:35px">Clear Picture</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.Picture Area -->
+            </div>
+
+
+            <div class="col-3 mt-4 col-onlinelist">
+                <div class="card card-primary"
+                    style="width:20vw;height:32.5vw;border-color: #233E58;border-width: 1px;">
+                    <div class="card-header" style="background-color: #233E58;">
+                        <h3 id="onlineList_header" class="card-title">ONLINE</h3>
+                        <a href="#" onclick="setAirServiceIpModal()">
+                            <i class="fas fa-cog float-right" style="transform: translateY(2px)"></i>
+                        </a>
+                        <!-- /.card-tools -->
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body" style="" id="hmd_list_card_body">
+                    </div>
+                    <div class="card-foot" style="height:160px;background-color:#ffffff" id="hmd_list_card_foot">
+                        <!-- For the footer of the onlinelist -->
+                        <!-- <div class="row">
+                                <div class="col-12 text-center mt-4">
+                                    <i class="fas fa-circle fa-xs mr-2"
+                                        style="transform: translate(0px, -2px);color: #8BFFA1;"></i>
+                                    <p class="p-calling-hmd">HmdName</p>
+
+                                </div>
+                                <div class="col-12 text-center mt-1">
+                                    <button class="btn btn-reject-call font-weight-bold" id="end_call_btn">End
+                                        Call</button>
+                                </div>
+                        </div> -->
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <div class="card invisible" id="recorded_data_card" style="margin-top:-18px;width:350px;height:250px;">
+                    <div class="card-body" style="background-color:#233E58;padding:0;">
+                        <div class="row">
+                            <div class="col-12">
+                                <hr class="recorded-data-hr">
+                            </div>
+                            <div class="col-12 text-center recorded-data-title">
+                                <a class="" style="background-color: #233e58;" id="recorded_data_header">&nbsp; Recorded
+                                    Data &nbsp; </a>
+                            </div>
+                            <div class="col-12 text-center recorded-data-procedure">
+                                <h5 id="recorded_data_procedure_name">Procedure Demo</h5>
+                            </div>
+                            <!-- <div class="col-12 text-center mt-4">
+                            <button class="btn btn-outline-blue">Log</button>
+                        </div> -->
+                            <div class="col-12 text-center mt-5">
+                                <button id="access_to_hmd_photos_btn" class="btn btn-outline-blue">Access to HMD
+                                    Photos</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.card -->
+
+                <!-- For test buttons -->
+                <!-- <button type="button" class="btn btn-expert" id='send_data' onclick='webrtcSendData()'>Send Data</button> -->
+                <!-- <button type="button" class="btn btn-expert" onclick='getJanusList()'>Get Room List</button> -->
+
+                <!-- For Janus Audio input -->
+                <div class="panel-body" id="mixedaudio"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Incoming Call Confirm Modal -->
+    <div class="modal fade" id="modal_incoming_call">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ">
+                <div class="modal-header" style="background-color:#A7A7A7; color:white;padding: 0;">
+                    <h6 id="incoming_header" class="modal-title font-weight-bold ml-2 mx-auto"
+                        style="text-align:center;">
+                        Incoming Call
+                    </h6>
+                </div>
+                <div class="modal-body">
+                    <div class="row justify-content-center align-self-center ml-2 mr-2">
+                        <div class="col-12 text-center mt-3">
+                            <!-- <img src="../static/mystatic/expertAssist/icon/call-coming.png" style="width:40px"> -->
+                            <h6 class="mt-3" id="incoming_title" style="font-size:30px;color:#5E5E5E">
+                                Hololens-Demo</h6>
+                        </div>
+                        <div class="col-12 mt-4 mb-3">
+                            <button id="reject_incoming_btn" type="button"
+                                class="btn btn-lg btn-reject-call float-left ml-5" data-dismiss="modal"><img
+                                    id="reject_incoming_img" src="../static/image/call_reject.png"
+                                    style="height:20px"></button>
+                            <button id="confirm_incoming_btn" type="button"
+                                class="btn btn-lg btn-answer-call float-right mr-5" data-dismiss="modal"><img
+                                    id="call_answer_img" src="../static/image/call_answer.png"
+                                    style="height:19px"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
+
+    <!-- <script src="draw.js"></script> -->
+    <script type="module" src="./js/api.js"></script>
+    <script src="./js/janus.js"></script>
+    <!-- <script src="module.js"></script> -->
+    <script type="module" src="./js/index.js"></script>
+</body>
+
+
+</html>
