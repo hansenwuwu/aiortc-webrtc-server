@@ -40,8 +40,8 @@ function Rect(x, y, w, h, color, lineWidth) {
   
     canvas = document.getElementById("draw_canvas");
     // 直接設定大小
-    canvas.height = 636;
-    canvas.width = 1128;
+    canvas.height = 720;
+    canvas.width = 1280;
     // TODO: 調箭頭大小
     contextDraw = canvas.getContext("2d");
   

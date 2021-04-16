@@ -215,7 +215,9 @@ async function _enterCall(hmd) {
     await common.waitUntil(() => {
       return getIsVideoReady();
     }, 300);
-    startRecording();
+    setTimeout(() => {
+      startRecording();
+    }, 500);
     setIsVideoReady(false);
   }
 }
@@ -562,7 +564,7 @@ export function handleSettingBtnOnclick() {
   else if (localStorage.getItem("isRecording") == 'false') {
     recordCheck.checked = false;
   }
-  else recordCheck.checked = true;
+  else recordCheck.checked = false;
 
   setIsRecording(recordCheck.checked);
 
