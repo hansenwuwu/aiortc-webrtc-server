@@ -36,7 +36,7 @@ var subscriber_mode = (getQueryStringValue("subscriber-mode") === "yes" || getQu
 $(document).ready(function () {
 	// Initialize the library (all console debuggers enabled)
 	Janus.init({
-		debug: "all", callback: function () {
+		debug: false, callback: function () {
 
 			janus = new Janus(
 				{
@@ -45,14 +45,14 @@ $(document).ready(function () {
 						// get online list
 						const url = "https://3.113.14.17/f/api/v1/online";
 						$.get(url, function (data) {
-							console.log('online list: ', data);
+							// console.log('online list: ', data);
 							// $('#onlineList').empty();
 							(data.online).forEach(element => {
-								console.log(element);
+								// console.log(element);
 								if (element.device_type == 'hmd') {
 									$('#onlineList').append(`<button id=${element.id}>${element.display_name}</button>`);
 									$(`#${element.id}`).click(function () {
-										console.log(element.publishId);
+										// console.log(element.publishId);
 										newRemoteFeed(parseInt(element.publishId), element.display_name, "", "");
 									});
 								}
