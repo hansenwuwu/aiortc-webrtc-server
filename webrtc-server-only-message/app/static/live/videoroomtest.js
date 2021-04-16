@@ -1,11 +1,13 @@
 var server = null;
 if (window.location.protocol === 'http:') {
 	// server = "http://" + "192.168.4.26" + ":8088/janus";
-	server = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:8088/janus";
+	// server = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:8088/janus";
+	server = "https://3.113.14.17/j/janus";
 }
 else {
 	// server = "http://" + "192.168.4.26" + ":8088/janus";
-	server = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:8088/janus";
+	// server = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:8088/janus";
+	server = "https://3.113.14.17/j/janus";
 }
 
 var janus = null;
