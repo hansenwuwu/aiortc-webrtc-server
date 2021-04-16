@@ -43,7 +43,7 @@ $(document).ready(function () {
 					server: server,
 					success: function () {
 						// get online list
-						const url = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:5000/api/v1/online";
+						const url = "https://3.113.14.17/f/api/v1/online";
 						$.get(url, function (data) {
 							console.log('online list: ', data);
 							// $('#onlineList').empty();
