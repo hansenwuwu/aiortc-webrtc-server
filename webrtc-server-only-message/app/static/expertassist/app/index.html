@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../static/adminlte3/css/adminlte.min.css">
     <!-- page css -->
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="loading.css">
     <!-- fontawesome -->
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
         integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
@@ -39,6 +40,9 @@
 </head>
 
 <body>
+    <div class="loading" style="display:none;" id="loading-spinner">Loading...
+        <a class="loading-text" id="loading_text" style="color:#f5f5f5">Now Loading...</a>
+    </div>
     <!-- Side navigation -->
     <div class="sidenav">
         <a href="#">Expert Assist</a>
@@ -233,9 +237,8 @@
                                     id="reject_incoming_img" src="../static/image/call_reject.png"
                                     style="height:20px"></button>
                             <button id="confirm_incoming_btn" type="button"
-                                class="btn btn-lg btn-answer-call float-right mr-5" data-dismiss="modal"><img
-                                    id="call_answer_img" src="../static/image/call_answer.png"
-                                    style="height:19px"></button>
+                                class="btn btn-lg btn-answer-call float-right mr-5"><img id="call_answer_img"
+                                    src="../static/image/call_answer.png" style="height:19px"></button>
                         </div>
                     </div>
                 </div>
@@ -246,10 +249,8 @@
     </div>
     <!-- /.modal -->
 
-    <!-- <script src="draw.js"></script> -->
-    <script type="module" src="./js/api.js"></script>
     <script src="./js/janus.js"></script>
-    <!-- <script src="module.js"></script> -->
+    <!-- <script type="module" src="./js/api.js"></script> -->
     <script type="module" src="./js/index.js"></script>
 </body>
 

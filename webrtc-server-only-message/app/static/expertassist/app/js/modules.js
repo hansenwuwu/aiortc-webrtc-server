@@ -1,16 +1,16 @@
 import {
+  isProduction,
   status,
   CallingEnum,
   EndCallEnum,
   setOnlineList,
   setCurrentHmd,
   setCallState,
-  setJanusState,
 } from "./manager.js";
 import { sendCall, sendEndCall, sendAnswerCall, sendRejectCall } from "./websocket.js";
 import { showToolbox, hideToolbox } from "./draw.js";
 import * as common from "./common.js";
-import { connectJanus, getMyId, newRemoteFeed, destroyJanus } from "./janus_videoroom.js";
+import { connectJanus, getMyId, setMyId, newRemoteFeed, destroyJanus } from "./janus_videoroom.js";
 import * as api from "./api.js";
 
 var callTimeout; // 當啟動calling，會自動計算是否timeout
@@ -123,6 +123,7 @@ function _setFooterSwitch(hmd, callState) {
 async function _handleCallBtnOnClick(hmd) {
   // draw calling loading
   document.getElementById("call_btn").onclick = async function () {
+    setCallState(CallingEnum.waiting);
     console.log("call");
     hmd.isCalling = true;
     _setFooterSwitch(hmd, FooterType.waiting);
@@ -133,7 +134,9 @@ async function _handleCallBtnOnClick(hmd) {
     }, 200);
     let myid = getMyId();
     console.log(`myid:${myid}`);
-    sendCall(hmd, myid);
+    if (myid != "-1") {
+      sendCall(hmd, myid);
+    }
 
     // setTimeout(() => {
     //   let myid = getMyId();
@@ -146,11 +149,10 @@ async function _handleCallBtnOnClick(hmd) {
       console.log("觸發endCall, 取消通話");
       endCall(EndCallEnum.self);
     };
-    setCallState(CallingEnum.waiting);
     callTimeout = setTimeout(() => {
       endCall(EndCallEnum.timeout);
       console.log("觸發endCall, 無回應");
-    }, 20000);
+    }, 15000);
   };
 }
 
@@ -165,6 +167,7 @@ function _clearCalling() {
   for (let i in status.online) {
     $("#hmd_" + status.online[i].id).removeClass("active");
   }
+  handleOnlineListOnClick(status.online, status.callState);
   document.getElementById("ADAT_bg").removeAttribute("hidden");
 }
 
@@ -200,6 +203,9 @@ function _setIncomingCallModal(hmd) {
     document.getElementById("confirm_incoming_btn").onclick = async function () {
       setCurrentHmd(hmd);
       connectJanus();
+      // show modal loading
+      // _showLoading();
+      _showIncomingCallLoading();
       await common.waitUntil(() => {
         return getMyId() == null ? false : true;
       }, 200);
@@ -207,7 +213,10 @@ function _setIncomingCallModal(hmd) {
       console.log(`myid:${myid}`);
       sendAnswerCall(hmd, myid);
       _enterCall(hmd);
-
+      // hide modal
+      $("#modal_incoming_call").modal("hide");
+      // _hideLoading();
+      _hideIncomingCallLoading();
       // setTimeout(() => {
       //   let myid = getMyId();
       //   console.log(`myid:${myid}`);
@@ -227,6 +236,7 @@ function _setIncomingCallModal(hmd) {
   document.getElementById(
     "incoming_title"
   ).innerHTML = `<a class="font-weight-bold">${hmd.display_name}</a>`;
+
   $("#modal_incoming_call").modal({
     backdrop: "static",
   });
@@ -242,6 +252,34 @@ function _checkCurrentHmdOnline(onlineList, hmd) {
     if (index == -1) return false;
     else return true;
   }
+}
+
+function _showIncomingCallLoading() {
+  let rejectIncomingBtn = document.getElementById("reject_incoming_btn");
+  rejectIncomingBtn.disabled = true;
+  let confirmIncomingBtn = document.getElementById("confirm_incoming_btn");
+  confirmIncomingBtn.disabled = true;
+  // confirmIncomingBtn.innerHTML = `
+  // <img id="call_answer_img" src="../static/image/call_answer.png" style="height:19px">
+  // <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true" style="height:19px"></span>
+  // `
+}
+function _hideIncomingCallLoading() {
+  let rejectIncomingBtn = document.getElementById("reject_incoming_btn");
+  rejectIncomingBtn.disabled = false;
+  let confirmIncomingBtn = document.getElementById("confirm_incoming_btn");
+  confirmIncomingBtn.disabled = false;
+  // confirmIncomingBtn.innerHTML = `
+  // <img id="call_answer_img" src="../static/image/call_answer.png" style="height:19px">
+  // `
+}
+
+// 整個頁面的loading
+function _showLoading() {
+  document.getElementById("loading-spinner").style.display = "block";
+}
+function _hideLoading() {
+  document.getElementById("loading-spinner").style.display = "none";
 }
 
 // ------------- public functions -------------
@@ -297,15 +335,29 @@ export async function endCall(endCallState) {
     console.log(error);
   }
 
-  // 只要目前狀況不是Empty，都會傳送EndCall資訊給對方 (若在後面才傳，currentHmd會被清空)
-  // sendEndCall(status.currentHmd);
+  // Endcall loading
+  if (status.callState == CallingEnum.online) {
+    let endCallBtn = document.getElementById("end_call_btn");
+    endCallBtn.disabled = true;
+    endCallBtn.innerHTML = `
+    End Call
+    <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
+    `;
+  } else if (status.callState == CallingEnum.waiting) {
+    let callingCancelBtn = document.getElementById("calling_cancel_btn");
+    callingCancelBtn.disabled = true;
+    callingCancelBtn.innerHTML = `
+    Cancel
+    <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
+    `;
+  } 
 
   // 等待Janus Destroy完成
-  console.log("state:");
   await common.waitUntil(() => {
-    return status.janusState == "end" ? true : false;
+    console.log(`isJanusEnd:${isJanusEnd}`);
+    return isJanusEnd;
   }, 500);
-  setJanusState("");
+  isJanusEnd = false; //重置janus.js中的變數 (但在janus成功重新連接時，依然需要重置一次)
 
   // 未撥打時，List中直接消失
   if (status.callState == CallingEnum.none && endCallState == EndCallEnum.hmd) {
@@ -324,6 +376,7 @@ export async function endCall(endCallState) {
   else if (status.callState == CallingEnum.waiting && endCallState == EndCallEnum.hmd) {
     console.log("等待接聽時，被掛斷");
     console.log(status);
+    // setMyId("-1");
 
     _setFooterSwitch(status.currentHmd, FooterType.declined);
     document.getElementById("close_call_btn").onclick = function () {
@@ -342,6 +395,7 @@ export async function endCall(endCallState) {
       _setFooterSwitch("", FooterType.empty);
       _clearCalling();
     };
+    // setMyId("-1");
     _handleCallBtnOnClick(status.currentHmd);
   }
   //通話中，自行掛斷 - Clear
@@ -375,8 +429,6 @@ export async function endCall(endCallState) {
   // setTimeout(() => {
   //   location.reload();
   // }, 100);
-
-  //TODO: 不要太快結束通話，需等待Janus清除
 }
 
 // handle Message get from websocket
@@ -388,7 +440,13 @@ export async function onWsMessage(data) {
       display_name: data.sender_name,
       publish_id: parseInt(data.value.publishId),
     };
-    document.getElementById("calling_cancel_btn").disabled = true;
+    let callingCancelBtn = document.getElementById("calling_cancel_btn");
+    callingCancelBtn.disabled = true;
+    callingCancelBtn.innerHTML = `
+    Cancel
+    <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
+    `;
+
     setTimeout(() => {
       _enterCall(hmd);
     }, 3000);
@@ -428,6 +486,9 @@ export async function onWsMessage(data) {
       else if (data.value.value == "no") type = 2;
     } else if (status.callState == CallingEnum.online) {
       if (data.value.value == "hangup") type = 3;
+    } else {
+      // Hide incoming call modal
+      $("#modal_incoming_call").modal("hide");
     }
   } else {
     type = 0;
@@ -447,7 +508,10 @@ export async function routinelyUpdateOnlineList() {
   // clear timeout every time
   clearTimeout(routinelyUpdateOnlineListFunc);
 
-  let newOnlineList = await api.getOnlineList(`https://${status.url}/f/api/v1/online`);
+  let onlineURL = isProduction
+    ? `https://${status.url}/f/api/v1/online`
+    : `http://${status.url}:5000/api/v1/online`;
+  let newOnlineList = await api.getOnlineList(onlineURL);
   // If the json file is updated, update the online list
   if (JSON.stringify(newOnlineList) != JSON.stringify(status.online)) {
     setOnlineList(newOnlineList);

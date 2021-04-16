@@ -1,8 +1,8 @@
-import { status, setJanusState } from "./manager.js";
+import { isProduction, status } from "./manager.js";
 
-var janusServer = null;
-// janusServer = "http://192.168.4.100:8088/janus";
-janusServer = `https://${status.url}/j/janus`;
+var janusServer = isProduction
+  ? `https://${status.url}/j/janus`
+  : `http://${status.url}:8088/janus`;
 
 var janus = null;
 var janus_roomList = null;
@@ -41,9 +41,12 @@ var feeds = [];
 export function getMyId() {
   return myid;
 }
+export function setMyId(id) {
+  let myid = id;
+}
 
 export function destroyJanus() {
-  janus.destroy();
+  if (janus != null) janus.destroy();
 }
 
 export function connectJanus() {
@@ -78,7 +81,7 @@ export function connectJanus() {
                   request: "join",
                   room: 5566,
                   ptype: "publisher",
-                  display: "cc-hsinchu",
+                  display: "CC-Demo",
                 };
                 // myusername = username;
                 console.log(myroom);
@@ -159,12 +162,8 @@ export function connectJanus() {
               // }
             },
             iceState: function (state) {
+              if (state=="disconnected")  isJanusEnd = true;
               Janus.log("ICE state changed to " + state);
-              // if (state=="disconnected") {
-              //   myid = null;
-              //   setJanusState(state);
-              // }
-              // console.log(janus);
             },
             mediaState: function (medium, on) {
               Janus.log("Janus " + (on ? "started" : "stopped") + " receiving our " + medium);
@@ -398,11 +397,9 @@ export function connectJanus() {
                           remoteFeed.rfdisplay +
                           ") has left the room, detaching"
                       );
-                      $("#remote1")
-                        .empty()
-                        .hide();
+                      $("#remote1").empty().hide();
                       $("#videoremote1").empty();
-                      console.log(`remoteFeed.rfindex: ${remoteFeed.rfindex}`)
+                      console.log(`remoteFeed.rfindex: ${remoteFeed.rfindex}`);
                       feeds[remoteFeed.rfindex] = null;
                       remoteFeed.detach();
                     }
@@ -430,9 +427,7 @@ export function connectJanus() {
                           remoteFeed.rfdisplay +
                           ") has left the room, detaching"
                       );
-                      $("#remote1")
-                        .empty()
-                        .hide();
+                      $("#remote1").empty().hide();
                       $("#videoremote1").empty();
                       feeds[remoteFeed.rfindex] = null;
                       remoteFeed.detach();
@@ -689,8 +684,8 @@ export function connectJanus() {
         destroyed: function () {
           console.log("reload");
           webrtcUp = false;
-          setJanusState("end");
           myid = null;
+          // isJanusEnd = true;
           // window.location.reload();
         },
       });
@@ -824,10 +819,7 @@ export function newRemoteFeed(id, display, audio, video) {
               ") in room " +
               msg["room"]
           );
-          $("#remote1")
-            .removeClass("hide")
-            .html(remoteFeed.rfdisplay)
-            .show();
+          $("#remote1").removeClass("hide").html(remoteFeed.rfdisplay).show();
         } else if (event === "event") {
           // Check if we got a simulcast-related event from this publisher
           var substream = msg["substream"];
@@ -880,6 +872,7 @@ export function newRemoteFeed(id, display, audio, video) {
       );
     },
     webrtcState: function (on) {
+      if (on) isJanusEnd = false;
       Janus.log(
         "Janus says this WebRTC PeerConnection (feed #" +
           remoteFeed.rfindex +
@@ -894,49 +887,45 @@ export function newRemoteFeed(id, display, audio, video) {
     onremotestream: function (stream) {
       Janus.debug("Remote feed #1" + ", stream:", stream);
       var addButtons = false;
-       //   if ($("#remotevideo1").length === 0) {
-        addButtons = true;
-        // No remote video yet
-        $("#videoremote1").append(
-          '<video class="rounded centered" id="waitingvideo1' +
-            '" width="100%" height="100%" />'
-        );
-        $("#videoremote1").append(
-          '<video class="rounded centered relative hide" id="remotevideo1' +
-            '" width="100%" height="100%" autoplay playsinline/>'
-        );
-        // $("#videoremote1").append(
-        //   '<span class="label label-primary hide" id="curres1' +
-        //     '" style="position: absolute; bottom: 0px; left: 0px; margin: 15px;"></span>'
-        // );
-        // Show the video, hide the spinner and show the resolution when we get a playing event
-        $("#remotevideo1").bind("playing", function () {
-          if (remoteFeed.spinner) remoteFeed.spinner.stop();
-          remoteFeed.spinner = null;
-          $("#waitingvideo1").remove();
-          if (this.videoWidth)
-            $("#remotevideo1")
-              .removeClass("hide")
-              .show();
-          var width = this.videoWidth;
-          var height = this.videoHeight;
-          // $("#curres1")
-          //   .removeClass("hide")
-          //   .text(width + "x" + height)
-          //   .show();
-          if (Janus.webRTCAdapter.browserDetails.browser === "firefox") {
-            // Firefox Stable has a bug: width and height are not immediately available after a playing
-            setTimeout(function () {
-              var width = $("#remotevideo1").get(0).videoWidth;
-              var height = $("#remotevideo1").get(0).videoHeight;
-              // $("#curres1")
-              //   .removeClass("hide")
-              //   .text(width + "x" + height)
-              //   .show();
-            }, 2000);
-          }
-        });
-    //   }
+      //   if ($("#remotevideo1").length === 0) {
+      addButtons = true;
+      // No remote video yet
+      $("#videoremote1").append(
+        '<video class="rounded centered" id="waitingvideo1' + '" width="100%" height="100%" />'
+      );
+      $("#videoremote1").append(
+        '<video class="rounded centered relative hide" id="remotevideo1' +
+          '" width="100%" height="100%" autoplay playsinline/>'
+      );
+      // $("#videoremote1").append(
+      //   '<span class="label label-primary hide" id="curres1' +
+      //     '" style="position: absolute; bottom: 0px; left: 0px; margin: 15px;"></span>'
+      // );
+      // Show the video, hide the spinner and show the resolution when we get a playing event
+      $("#remotevideo1").bind("playing", function () {
+        if (remoteFeed.spinner) remoteFeed.spinner.stop();
+        remoteFeed.spinner = null;
+        $("#waitingvideo1").remove();
+        if (this.videoWidth) $("#remotevideo1").removeClass("hide").show();
+        var width = this.videoWidth;
+        var height = this.videoHeight;
+        // $("#curres1")
+        //   .removeClass("hide")
+        //   .text(width + "x" + height)
+        //   .show();
+        if (Janus.webRTCAdapter.browserDetails.browser === "firefox") {
+          // Firefox Stable has a bug: width and height are not immediately available after a playing
+          setTimeout(function () {
+            var width = $("#remotevideo1").get(0).videoWidth;
+            var height = $("#remotevideo1").get(0).videoHeight;
+            // $("#curres1")
+            //   .removeClass("hide")
+            //   .text(width + "x" + height)
+            //   .show();
+          }, 2000);
+        }
+      });
+      //   }
       Janus.attachMediaStream($("#remotevideo1").get(0), stream);
       var videoTracks = stream.getVideoTracks();
       if (!videoTracks || videoTracks.length === 0) {
@@ -952,9 +941,7 @@ export function newRemoteFeed(id, display, audio, video) {
         }
       } else {
         $("#videoremote1" + " .no-video-container").remove();
-        $("#remotevideo1")
-          .removeClass("hide")
-          .show();
+        $("#remotevideo1").removeClass("hide").show();
       }
       if (!addButtons) return;
       if (
@@ -966,17 +953,17 @@ export function newRemoteFeed(id, display, audio, video) {
         //   .removeClass("hide")
         //   .show();
         // bitrateTimer[remoteFeed.rfindex] = setInterval(function () {
-          // Display updated bitrate, if supported
-          // var bitrate = remoteFeed.getBitrate();
-          // $("#curbitrate1").text(bitrate);
-          // Check if the resolution changed too
-          // var width = $("#remotevideo1").get(0).videoWidth;
-          // var height = $("#remotevideo1").get(0).videoHeight;
-          // if (width > 0 && height > 0)
-          //   $("#curres1")
-          //     .removeClass("hide")
-          //     .text(width + "x" + height)
-          //     .show();
+        // Display updated bitrate, if supported
+        // var bitrate = remoteFeed.getBitrate();
+        // $("#curbitrate1").text(bitrate);
+        // Check if the resolution changed too
+        // var width = $("#remotevideo1").get(0).videoWidth;
+        // var height = $("#remotevideo1").get(0).videoHeight;
+        // if (width > 0 && height > 0)
+        //   $("#curres1")
+        //     .removeClass("hide")
+        //     .text(width + "x" + height)
+        //     .show();
         // }, 1000);
       }
     },

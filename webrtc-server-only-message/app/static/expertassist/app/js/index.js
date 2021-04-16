@@ -1,4 +1,4 @@
-import {status, setOnlineList} from "./manager.js";
+import { isProduction, status, setOnlineList } from "./manager.js";
 import * as api from "./api.js";
 import * as modules from "./modules.js";
 import * as draw from "./draw.js";
@@ -6,10 +6,13 @@ import * as draw from "./draw.js";
 const init = async () => {
   draw.init();
   // connectJanus();
-  let data = await api.getOnlineList(`https://${status.url}/f/api/v1/online`);
+  let onlineURL = isProduction
+    ? `https://${status.url}/f/api/v1/online`
+    : `http://${status.url}:5000/api/v1/online`;
+  let data = await api.getOnlineList(onlineURL);
   setOnlineList(data);
   modules.routinelyUpdateOnlineList();
-  console.log(status.online); 
+  console.log(status.online);
   modules.drawOnlineList(status.online);
   modules.handleOnlineListOnClick(status.online, status.callState);
 };

@@ -1,7 +1,10 @@
 import { onWsMessage } from "./modules.js";
-import { status } from "./manager.js";
+import { isProduction, status } from "./manager.js";
 
-const ws = new WebSocket(`ws://${status.url}/f/ws/adbcc/cc_001/ADBCC-hsinchu-01/0/0`);
+var wsURL = isProduction
+  ? `wss://${status.url}/f/wss/adbcc/cc_001/CC-Demo/0/0`
+  : `ws://${status.url}:5000/ws/adbcc/cc_001/CC-Demo/0/0`;
+const ws = new WebSocket(wsURL);
 ws.onopen = () => {
   console.log("open connection");
 };
@@ -19,8 +22,8 @@ ws.onmessage = (event) => {
   } catch (error) {
     data = {
       value: {
-        type : "error"
-      }
+        type: "error",
+      },
     };
   }
   // console.log(data);
