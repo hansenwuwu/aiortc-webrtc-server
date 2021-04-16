@@ -18,6 +18,7 @@ const status = {
   online: {},
   currentHmd: {},
   callState: CallingEnum.none,
+  isRecording : true,
 };
 const urlExample = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:5000/api/v1/online";
 
@@ -34,6 +35,10 @@ function setCallState(callState) {
   status.callState = callState;
 }
 
+function setIsRecording(isRecording) {
+  status.isRecording = isRecording;
+}
+
 
 export {
   isProduction,
@@ -43,4 +48,5 @@ export {
   setOnlineList,
   setCurrentHmd,
   setCallState,
+  setIsRecording
 };

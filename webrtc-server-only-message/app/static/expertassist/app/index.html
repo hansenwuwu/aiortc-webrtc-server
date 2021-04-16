@@ -34,6 +34,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
 
+    <title>Expert Assist Demo - ADAT Technology</title>
 
     <script type="text/javascript">
     </script>
@@ -63,6 +64,7 @@
         </div>
     </div> -->
     <div class="main">
+
         <div class="row">
             <div class="col-9 ml-5 mt-4" style="height:80vh">
                 <div id="video_wrapper" class="video-wrapper" style="height:32.5vw;width:57.6vw">
@@ -155,7 +157,7 @@
                     style="width:20vw;height:32.5vw;border-color: #233E58;border-width: 1px;">
                     <div class="card-header" style="background-color: #233E58;">
                         <h3 id="onlineList_header" class="card-title">ONLINE</h3>
-                        <a href="#" onclick="setAirServiceIpModal()">
+                        <a href="#" id="setting_btn">
                             <i class="fas fa-cog float-right" style="transform: translateY(2px)"></i>
                         </a>
                         <!-- /.card-tools -->
@@ -187,7 +189,8 @@
                                 <hr class="recorded-data-hr">
                             </div>
                             <div class="col-12 text-center recorded-data-title">
-                                <a class="" style="background-color: #233e58;" id="recorded_data_header">&nbsp; Recorded
+                                <a class="" style="background-color: #233e58;" id="recorded_data_header">&nbsp;
+                                    Recorded
                                     Data &nbsp; </a>
                             </div>
                             <div class="col-12 text-center recorded-data-procedure">
@@ -212,7 +215,12 @@
                 <!-- For Janus Audio input -->
                 <div class="panel-body" id="mixedaudio"></div>
             </div>
+            <video id="recorded_video" style="display:hidden">
+                <a id="downloadButton" class="button">download</a>
+            </video>
+
         </div>
+
     </div>
     <!-- Incoming Call Confirm Modal -->
     <div class="modal fade" id="modal_incoming_call">
@@ -248,6 +256,28 @@
         <!-- /.modal-dialog -->
     </div>
     <!-- /.modal -->
+
+
+    <!-- Setting Modal -->
+    <div class="modal fade" id="modal_setting" tabindex="-1" role="dialog" aria-labelledby="modal_setting"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Settings</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group form-check">
+                        <input type="checkbox" class="form-check-input" id="record_check">
+                        <label class="form-check-label" for="recordCheck">Recording the Stream</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="./js/janus.js"></script>
     <!-- <script type="module" src="./js/api.js"></script> -->

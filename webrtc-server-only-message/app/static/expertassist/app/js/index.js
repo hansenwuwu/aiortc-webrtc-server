@@ -15,6 +15,7 @@ const init = async () => {
   console.log(status.online);
   modules.drawOnlineList(status.online);
   modules.handleOnlineListOnClick(status.online, status.callState);
+  modules.handleSettingBtnOnclick();
 };
 
 init();

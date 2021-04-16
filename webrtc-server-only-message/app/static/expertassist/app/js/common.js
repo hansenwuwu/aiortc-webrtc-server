@@ -74,7 +74,7 @@ export function pad(val) {
 }
 
 // Timeout for async await
-function timeout(ms) {
+export function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -84,3 +84,15 @@ function getListObjectByIp(data, ip) {
     return data.ip == ip;
   });
 }
+
+export function getDatetime() {
+  let date = new Date();
+  let datetime = `${date.getFullYear()}${
+    (date.getMonth() + 1 < 10 ? "0" : "") + (date.getMonth() + 1)
+  }${(date.getDate() < 10 ? "0" : "") + date.getDate()}_${
+    (date.getHours() < 10 ? "0" : "") + date.getHours()
+  }${(date.getMinutes() < 10 ? "0" : "") + date.getMinutes()}`;
+
+  return datetime;
+}
+

@@ -6,12 +6,22 @@ import {
   setOnlineList,
   setCurrentHmd,
   setCallState,
+  setIsRecording
 } from "./manager.js";
+import {
+  connectJanus,
+  getMyId,
+  newRemoteFeed,
+  destroyJanus,
+  getIsVideoReady,
+  setIsVideoReady,
+} from "./janus_videoroom.js";
 import { sendCall, sendEndCall, sendAnswerCall, sendRejectCall } from "./websocket.js";
 import { showToolbox, hideToolbox } from "./draw.js";
 import * as common from "./common.js";
-import { connectJanus, getMyId, setMyId, newRemoteFeed, destroyJanus } from "./janus_videoroom.js";
+
 import * as api from "./api.js";
+import { startRecording, stopRecording } from "./recording.js";
 
 var callTimeout; // 當啟動calling，會自動計算是否timeout
 var timer; // 顯示目前通話秒數
@@ -171,11 +181,15 @@ function _clearCalling() {
   document.getElementById("ADAT_bg").removeAttribute("hidden");
 }
 
-function _enterCall(hmd) {
-  console.log("開始通話");
+function _startCallState() {
+  console.log("進入通話階段");
   setCallState(CallingEnum.online);
   clearTimeout(callTimeout);
   clearInterval(timer);
+}
+
+async function _enterCall(hmd) {
+  console.log("正式開始通話");
   // prevent the user from reject the call if HMD answered
   setTimeout(() => {
     document.getElementById("ADAT_bg").setAttribute("hidden", "");
@@ -196,33 +210,37 @@ function _enterCall(hmd) {
 
   // get remote video
   newRemoteFeed(hmd.publish_id);
+  if (status.isRecording) {
+    // wait for video ready to start recording
+    await common.waitUntil(() => {
+      return getIsVideoReady();
+    }, 300);
+    startRecording();
+    setIsVideoReady(false);
+  }
 }
 
 function _setIncomingCallModal(hmd) {
   function _handleAnswerBtnOnClick() {
     document.getElementById("confirm_incoming_btn").onclick = async function () {
+      // 改變設定，避免timeout
       setCurrentHmd(hmd);
+      _startCallState();
+
       connectJanus();
-      // show modal loading
       // _showLoading();
       _showIncomingCallLoading();
       await common.waitUntil(() => {
         return getMyId() == null ? false : true;
       }, 200);
+      // 進入通話
       let myid = getMyId();
       console.log(`myid:${myid}`);
       sendAnswerCall(hmd, myid);
       _enterCall(hmd);
       // hide modal
       $("#modal_incoming_call").modal("hide");
-      // _hideLoading();
       _hideIncomingCallLoading();
-      // setTimeout(() => {
-      //   let myid = getMyId();
-      //   console.log(`myid:${myid}`);
-      //   sendAnswerCall(hmd, myid);
-      //   _enterCall(hmd);
-      // }, 3000);
     };
   }
   function _handleAnswerNo() {
@@ -335,14 +353,22 @@ export async function endCall(endCallState) {
     console.log(error);
   }
 
-  // Endcall loading
   if (status.callState == CallingEnum.online) {
+    // Endcall loading
     let endCallBtn = document.getElementById("end_call_btn");
     endCallBtn.disabled = true;
     endCallBtn.innerHTML = `
     End Call
     <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
     `;
+    // stop recording
+    if (status.isRecording) {
+      try {
+        stopRecording();
+      } catch (error) {
+        console.log(error);
+      }
+    }
   } else if (status.callState == CallingEnum.waiting) {
     let callingCancelBtn = document.getElementById("calling_cancel_btn");
     callingCancelBtn.disabled = true;
@@ -446,10 +472,8 @@ export async function onWsMessage(data) {
     Cancel
     <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
     `;
-
-    setTimeout(() => {
-      _enterCall(hmd);
-    }, 3000);
+    _startCallState();
+    _enterCall(hmd);
   }
   async function _handleAnswerNo() {
     console.log("get no");
@@ -523,9 +547,39 @@ export async function routinelyUpdateOnlineList() {
     //處理通話中的HMD突然下線
     let isOnline = _checkCurrentHmdOnline(status.online, status.currentHmd);
     if (!isOnline) {
-      if (status.callState != CallingEnum.one) endCall(EndCallEnum.hmd);
+      if (status.callState != CallingEnum.none) endCall(EndCallEnum.hmd);
       else _clearCalling();
     }
   }
   routinelyUpdateOnlineListFunc = setTimeout(routinelyUpdateOnlineList, 1000);
+}
+
+export function handleSettingBtnOnclick() {
+  let recordCheck = document.getElementById("record_check");
+  if (localStorage.getItem("isRecording") == 'true') {
+    recordCheck.checked = true;
+  } 
+  else if (localStorage.getItem("isRecording") == 'false') {
+    recordCheck.checked = false;
+  }
+  else recordCheck.checked = true;
+
+  setIsRecording(recordCheck.checked);
+
+  recordCheck.onclick = function () {
+    if (this.checked) {
+      console.log("isRecording set to true");
+      setIsRecording(true)
+      localStorage.setItem("isRecording", true);
+    } else {
+      console.log("isRecording set to false");
+      setIsRecording(false)
+      localStorage.setItem("isRecording", false);
+    }
+  };
+ 
+
+  document.getElementById("setting_btn").onclick = function () {
+    $("#modal_setting").modal("toggle");
+  };
 }

@@ -1,4 +1,5 @@
-import { isProduction, status } from "./manager.js";
+import { isProduction, status, EndCallEnum } from "./manager.js";
+import { endCall } from "./modules.js"; //為了處理janus斷開的特殊狀況
 
 var janusServer = isProduction
   ? `https://${status.url}/j/janus`
@@ -37,16 +38,23 @@ var subscriber_mode =
 // subscriber_mode = true;
 
 var feeds = [];
+var isVideoReady = false;
 
 export function getMyId() {
   return myid;
 }
 export function setMyId(id) {
-  let myid = id;
+  myid = id;
 }
 
 export function destroyJanus() {
   if (janus != null) janus.destroy();
+}
+export function getIsVideoReady() {
+  return isVideoReady;
+}
+export function setIsVideoReady(isReady) {
+  isVideoReady = isReady;
 }
 
 export function connectJanus() {
@@ -162,7 +170,7 @@ export function connectJanus() {
               // }
             },
             iceState: function (state) {
-              if (state=="disconnected")  isJanusEnd = true;
+              if (state == "disconnected") isJanusEnd = true;
               Janus.log("ICE state changed to " + state);
             },
             mediaState: function (medium, on) {
@@ -872,7 +880,11 @@ export function newRemoteFeed(id, display, audio, video) {
       );
     },
     webrtcState: function (on) {
-      if (on) isJanusEnd = false;
+      if (on) {
+        //重置isJanusEnd
+        isJanusEnd = false;
+        isVideoReady = true;
+      }
       Janus.log(
         "Janus says this WebRTC PeerConnection (feed #" +
           remoteFeed.rfindex +
@@ -969,6 +981,10 @@ export function newRemoteFeed(id, display, audio, video) {
     },
     oncleanup: function () {
       Janus.log(" ::: Got a cleanup notification (remote feed " + id + ") :::");
+      // 斷開通話
+      endCall(EndCallEnum.hmd);
+      console.log("Janus 中斷，結束通話")
+
       if (remoteFeed.spinner) remoteFeed.spinner.stop();
       remoteFeed.spinner = null;
       $("#remotevideo1").remove();
