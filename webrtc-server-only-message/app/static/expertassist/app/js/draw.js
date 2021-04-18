@@ -32,7 +32,7 @@ function Rect(x, y, w, h, color, lineWidth) {
   //=====================page_init===========================
   
   export function init() {
-    console.log('initialzing Draw')
+    // console.log('initialzing Draw')
 
     objects = [];
     mouse_coord_buffer = null;
@@ -83,6 +83,7 @@ function Rect(x, y, w, h, color, lineWidth) {
     }
     document.getElementById("clear_mark_btn").onclick = function(){
       clearMarkers(status.currentHmd);
+      clearCanvas();
     }
     document.getElementById("file_input").oninput = function(){
        loadFile(this, event)
@@ -239,6 +240,19 @@ function Rect(x, y, w, h, color, lineWidth) {
     objects = [];
     drawRect();
   }
+
+  function disableScaling(){
+    document.getElementById("mark_plus_img").classList.add("grayscale")
+    document.getElementById("mark_minus_img").classList.add("grayscale")
+    document.getElementById("mark_plus_btn").style = `pointer-events:none`
+    document.getElementById("mark_minus_btn").style = `pointer-events:none`
+  }
+  function enableScaling(){
+    document.getElementById("mark_plus_img").classList.remove("grayscale")
+    document.getElementById("mark_minus_img").classList.remove("grayscale")
+    document.getElementById("mark_plus_btn").style = ``
+    document.getElementById("mark_minus_btn").style = ``
+  }
   
   function drawRect() {
     contextDraw.clearRect(0, 0, canvas.width, canvas.height);
@@ -316,9 +330,12 @@ function Rect(x, y, w, h, color, lineWidth) {
         object.isSelected = true;
         isDragging = true;
         mouse_coord_buffer = [clickX, clickY];
+        if (object.type == "Arrow") disableScaling();
+        else enableScaling();
         drawRect();
         return;
       } else {
+        enableScaling();
         object.isSelected = false;
       }
     }
@@ -391,7 +408,7 @@ function Rect(x, y, w, h, color, lineWidth) {
   
       var config = {
         file: sender.files[0],
-        maxSize: 300,
+        maxSize: 500,
       };
       var resizedImage = await resizeImage(config);
       reader.readAsDataURL(resizedImage);

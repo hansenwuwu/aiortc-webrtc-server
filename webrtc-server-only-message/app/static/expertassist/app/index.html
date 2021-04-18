@@ -40,7 +40,7 @@
 
 
     <script type="text/javascript">
-    
+
     </script>
 </head>
 
@@ -91,36 +91,36 @@
                             <div class="card-body mark-area-body">
                                 <div class="container">
                                     <div class="row justify-content-center">
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button type="button" class="btn mark-btn">
                                             <img class="mark-img" id="new_arrow_red_img"
                                                 src="../static/image/arrow_red.png"></button>
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button type="button" class="btn mark-btn">
                                             <img id="new_arrow_white_img" src="../static/image/arrow_white.png"
                                                 class="mark-img"></button>
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button type="button" class="btn mark-btn">
                                             <img id="new_arrow_bluegreen_img" src="../static/image/arrow_blue.png"
                                                 class="mark-img"></button>
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button id="mark_plus_btn" type="button" class="btn mark-btn">
                                             <img id="mark_plus_img" src="../static/image/plus.png"
                                                 class="mark-img"></button>
                                         <button type="button" id="send_mark_btn" class="btn btn-outline-mark"
-                                            data-dismiss="modal" style="height:35px">Send Marks</button>
+                                            style="height:35px">Send Marks</button>
                                     </div>
                                     <div class="row justify-content-center">
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button type="button" class="btn mark-btn">
                                             <img id="new_square_red_img" src="../static/image/square_red.png"
                                                 class="mark-img"></button>
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button type="button" class="btn mark-btn">
                                             <img id="new_square_white_img" src="../static/image/square_white.png"
                                                 class="mark-img"></button>
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button type="button" class="btn mark-btn">
                                             <img id="new_square_bluegreen_img" src="../static/image/square_blue.png"
                                                 class="mark-img"></button>
-                                        <button type="button" class="btn mark-btn" data-dismiss="modal">
+                                        <button id="mark_minus_btn" type="button" class="btn mark-btn">
                                             <img id="mark_minus_img" src="../static/image/minus.png"
                                                 class="mark-img"></button>
                                         <button type="button" id="clear_mark_btn" class="btn btn-outline-mark"
-                                            data-dismiss="modal" style="height:35px">Clear Marks</button>
+                                            style="height:35px">Clear Marks</button>
                                     </div>
                                 </div>
                             </div>
@@ -129,7 +129,7 @@
                     <!-- /. Mark Area -->
                     <!-- Picture Area -->
                     <div class="col-4 mt-4 ml-5">
-                        <div id="PICTURE" class="card text-center mark-area" style="visibility:hidden">
+                        <div id="PICTURE" class="card text-center mark-area picture-area" style="visibility:hidden">
                             <div class="card-header mark-area-head" style="background-color: #E6E6E6;">
                                 <div id="picture_header" style="font-weight: bold;">PICTURE</div>
                                 <!-- /.card-tools -->
@@ -162,7 +162,8 @@
                     <div class="card-header" style="background-color: #233E58;">
                         <h3 id="onlineList_header" class="card-title">ONLINE</h3>
                         <a href="#" id="setting_btn">
-                            <i class="fas fa-cog float-right" style="transform: translateY(2px)"></i>
+                            <i id="setting_btn_icon" class="fas fa-cog float-right"
+                                style="transform: translateY(2px)"></i>
                         </a>
                         <!-- /.card-tools -->
                     </div>
@@ -179,7 +180,7 @@
 
                                 </div>
                                 <div class="col-12 text-center mt-1">
-                                    <button class="btn btn-reject-call font-weight-bold" id="end_call_btn">End
+                                    <button class="btn btn-cancel-call font-weight-bold" id="end_call_btn">End
                                         Call</button>
                                 </div>
                         </div> -->
@@ -268,17 +269,36 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Settings</h5>
+                    <h5 class="modal-title" id="modal_setting_title">Settings</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group form-check">
-                        <input type="checkbox" class="form-check-input" id="record_check">
-                        <label class="form-check-label" for="recordCheck">Recording the Stream</label>
+                <form id="setting_form">
+                    <div class="modal-body ml-2 mr-2">
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Your Display Name：</h6>
+                            </div>
+                            <div class="col-12 input-group">
+                                <!-- <textarea class="form-control mb-4" rows="1" id="input_textarea"></textarea> -->
+                                <input type="text" class="form-control" id="display_name_text" maxlength="15"
+                                    placeholder="Enter the name you want to display to HMD" aria-label="" required>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="record_check">
+                            <label class="form-check-label" id="record_check_label" for="recordCheck">Recording the
+                                Stream</label>
+                        </div>
                     </div>
-                </div>
+                    <div class="modal-footer">
+                        <input type="submit" id="setting_confirm_submit" class="btn btn-confirm" value="Confirm">
+                        <!-- <button id="setting_confirm_btn" type="submit" class="btn btn-confirm"
+                            >confirm</button> -->
+                    </div>
+                </form>
             </div>
         </div>
     </div>

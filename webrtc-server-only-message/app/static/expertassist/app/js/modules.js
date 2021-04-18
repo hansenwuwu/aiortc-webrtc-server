@@ -6,7 +6,8 @@ import {
   setOnlineList,
   setCurrentHmd,
   setCallState,
-  setIsRecording
+  setIsRecording,
+  setDisplayName,
 } from "./manager.js";
 import {
   connectJanus,
@@ -37,7 +38,7 @@ var routinelyUpdateOnlineListFunc;
 
 // ------------- private functions -------------
 // onlineList Footer
-function _setFooterSwitch(hmd, callState) {
+function setFooterSwitch(hmd, callState) {
   function _setInitFooter() {
     document.getElementById("hmd_list_card_foot").style.backgroundColor = "#233E58";
     document.getElementById("hmd_list_card_foot").innerHTML = `
@@ -66,7 +67,7 @@ function _setFooterSwitch(hmd, callState) {
         </div>
     </div>
     <div class="col-12 text-center" style="margin-top:-3px;">
-        <button class="btn btn-reject-call font-weight-bold" id="calling_cancel_btn">Cancel</button>
+        <button class="btn btn-cancel-call font-weight-bold" id="calling_cancel_btn">Cancel</button>
     </div>
     </div>`;
   }
@@ -81,7 +82,7 @@ function _setFooterSwitch(hmd, callState) {
           
         </div>
         <div class="col-12 text-center" style="margin-top:-2px;">
-          <button class="btn btn-reject-call font-weight-bold" id="end_call_btn">End Call</button>
+          <button class="btn btn-cancel-call font-weight-bold" id="end_call_btn">End Call</button>
         </div>
       </div>`;
   }
@@ -130,13 +131,13 @@ function _setFooterSwitch(hmd, callState) {
   };
   return footerMap[callState]();
 }
-async function _handleCallBtnOnClick(hmd) {
+async function handleCallBtnOnClick(hmd) {
   // draw calling loading
   document.getElementById("call_btn").onclick = async function () {
     setCallState(CallingEnum.waiting);
     console.log("call");
     hmd.isCalling = true;
-    _setFooterSwitch(hmd, FooterType.waiting);
+    setFooterSwitch(hmd, FooterType.waiting);
     // janus connection
     connectJanus();
     await common.waitUntil(() => {
@@ -166,35 +167,54 @@ async function _handleCallBtnOnClick(hmd) {
   };
 }
 
-function _clearCalling() {
-  console.log("clear calling");
+function turnOnSettingBtn() {
+  let settingIcon = document.getElementById("setting_btn_icon");
+  settingIcon.classList.remove("disabled");
+  document.getElementById("setting_btn").style = "";
+}
+function turnOffSettingBtn() {
+  let settingIcon = document.getElementById("setting_btn_icon");
+  settingIcon.classList.add("disabled");
+  document.getElementById("setting_btn").style = "pointer-events:none;";
+}
 
+// 通話一結束，不需等狀態判斷及janus Destroy即可處理的部分
+function clearCallState() {
+  console.log("進入結束通話階段");
   clearInterval(timer);
   clearTimeout(callTimeout);
-  setCallState(CallingEnum.none);
-  // setCurrentHmd({});
   hideToolbox();
+  document.getElementById("ADAT_bg").removeAttribute("hidden");
+}
+
+function clearCalling() {
+  console.log("正式結束通話");
+  setCallState(CallingEnum.none); // 不能太早轉為none，需要用於判定狀態
+  // setCurrentHmd({});
   for (let i in status.online) {
     $("#hmd_" + status.online[i].id).removeClass("active");
   }
   handleOnlineListOnClick(status.online, status.callState);
-  document.getElementById("ADAT_bg").removeAttribute("hidden");
+  turnOnSettingBtn();
 }
 
-function _startCallState() {
+// 先改變state
+function enterCallState() {
   console.log("進入通話階段");
   setCallState(CallingEnum.online);
   clearTimeout(callTimeout);
   clearInterval(timer);
+  turnOffSettingBtn();
 }
 
-async function _enterCall(hmd) {
+// 正式開始通話的處理
+async function enterCalling(hmd) {
   console.log("正式開始通話");
   // prevent the user from reject the call if HMD answered
   setTimeout(() => {
     document.getElementById("ADAT_bg").setAttribute("hidden", "");
     showToolbox();
-    _setFooterSwitch(hmd, FooterType.online);
+    setFooterSwitch(hmd, FooterType.online);
     // Timer start to count
     var sec = 0;
     timer = setInterval(function () {
@@ -215,23 +235,21 @@ async function _enterCall(hmd) {
     await common.waitUntil(() => {
       return getIsVideoReady();
     }, 300);
-    setTimeout(() => {
-      startRecording();
-    }, 500);
+    startRecording();
     setIsVideoReady(false);
   }
 }
 
-function _setIncomingCallModal(hmd) {
+function setIncomingCallModal(hmd) {
   function _handleAnswerBtnOnClick() {
     document.getElementById("confirm_incoming_btn").onclick = async function () {
       // 改變設定，避免timeout
       setCurrentHmd(hmd);
-      _startCallState();
+      enterCallState();
 
       connectJanus();
-      // _showLoading();
-      _showIncomingCallLoading();
+      // showLoading();
+      showIncomingCallLoading();
       await common.waitUntil(() => {
         return getMyId() == null ? false : true;
       }, 200);
@@ -239,10 +257,10 @@ function _setIncomingCallModal(hmd) {
       let myid = getMyId();
       console.log(`myid:${myid}`);
       sendAnswerCall(hmd, myid);
-      _enterCall(hmd);
+      enterCalling(hmd);
       // hide modal
       $("#modal_incoming_call").modal("hide");
-      _hideIncomingCallLoading();
+      hideIncomingCallLoading();
     };
   }
   function _handleAnswerNo() {
@@ -265,7 +283,7 @@ function _setIncomingCallModal(hmd) {
   _handleAnswerNo();
 }
 
-function _checkCurrentHmdOnline(onlineList, hmd) {
+function checkCurrentHmdOnline(onlineList, hmd) {
   if (onlineList == []) return false;
   else {
     let index = onlineList.findIndex((x) => x.display_name == hmd.display_name);
@@ -274,7 +292,7 @@ function _checkCurrentHmdOnline(onlineList, hmd) {
   }
 }
 
-function _showIncomingCallLoading() {
+function showIncomingCallLoading() {
   let rejectIncomingBtn = document.getElementById("reject_incoming_btn");
   rejectIncomingBtn.disabled = true;
   let confirmIncomingBtn = document.getElementById("confirm_incoming_btn");
@@ -284,7 +302,7 @@ function _showIncomingCallLoading() {
   // <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true" style="height:19px"></span>
   // `
 }
-function _hideIncomingCallLoading() {
+function hideIncomingCallLoading() {
   let rejectIncomingBtn = document.getElementById("reject_incoming_btn");
   rejectIncomingBtn.disabled = false;
   let confirmIncomingBtn = document.getElementById("confirm_incoming_btn");
@@ -295,10 +313,10 @@ function _hideIncomingCallLoading() {
 }
 
 // 整個頁面的loading
-function _showLoading() {
+function showLoading() {
   document.getElementById("loading-spinner").style.display = "block";
 }
-function _hideLoading() {
+function hideLoading() {
   document.getElementById("loading-spinner").style.display = "none";
 }
 
@@ -340,23 +358,26 @@ export function handleOnlineListOnClick(onlineList, callState) {
       if (callState == CallingEnum.none) {
         setCurrentHmd(onlineList[i]);
         // show call area
-        _setFooterSwitch(onlineList[i], FooterType.init);
-        _handleCallBtnOnClick(onlineList[i]);
+        setFooterSwitch(onlineList[i], FooterType.init);
+        handleCallBtnOnClick(onlineList[i]);
       }
     };
   }
 }
 
 export async function endCall(endCallState) {
-  // Destroy Janus (暫時先不管什麼情況都destroy)
+  // ------ Destroy Janus (暫時先不管什麼情況都destroy) ------
   try {
     destroyJanus();
   } catch (error) {
     console.log(error);
   }
 
+  // 通話一結束，不需等狀態判斷及janus Destroy即可處理的部分
+  clearCallState();
+
+  // ------ Endcall loading ------
   if (status.callState == CallingEnum.online) {
-    // Endcall loading
     let endCallBtn = document.getElementById("end_call_btn");
     endCallBtn.disabled = true;
     endCallBtn.innerHTML = `
@@ -378,9 +399,9 @@ export async function endCall(endCallState) {
     Cancel
     <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
     `;
-  } 
+  }
 
-  // 等待Janus Destroy完成
+  // ------ 等待Janus Destroy完成 ------
   await common.waitUntil(() => {
     console.log(`isJanusEnd:${isJanusEnd}`);
     return isJanusEnd;
@@ -390,13 +411,13 @@ export async function endCall(endCallState) {
   // 未撥打時，List中直接消失
   if (status.callState == CallingEnum.none && endCallState == EndCallEnum.hmd) {
     console.log("未撥打時，List中直接消失");
-    _setFooterSwitch("", FooterType.empty);
+    setFooterSwitch("", FooterType.empty);
     setCurrentHmd({});
   }
   // 等待接聽時，自行取消通話 - Empty
   else if (status.callState == CallingEnum.waiting && endCallState == EndCallEnum.self) {
     console.log("等待接聽時，自行取消通話");
-    _setFooterSwitch("", FooterType.empty);
+    setFooterSwitch("", FooterType.empty);
     sendEndCall(status.currentHmd);
     setCurrentHmd({});
   }
@@ -406,52 +427,52 @@ export async function endCall(endCallState) {
     console.log(status);
     // setMyId("-1");
 
-    _setFooterSwitch(status.currentHmd, FooterType.declined);
+    setFooterSwitch(status.currentHmd, FooterType.declined);
     document.getElementById("close_call_btn").onclick = function () {
-      _setFooterSwitch("", FooterType.empty);
-      _clearCalling();
+      setFooterSwitch("", FooterType.empty);
+      clearCalling();
     };
     // $("#modal_incoming_call").modal("hide");
-    _handleCallBtnOnClick(status.currentHmd);
+    handleCallBtnOnClick(status.currentHmd);
   }
   // 等待接聽時，Timeout - No Response
   else if (status.callState == CallingEnum.waiting && endCallState == EndCallEnum.timeout) {
     console.log("等待接聽時，Timeout");
-    _setFooterSwitch(status.currentHmd, FooterType.timeout);
+    setFooterSwitch(status.currentHmd, FooterType.timeout);
     sendEndCall(status.currentHmd);
     document.getElementById("close_call_btn").onclick = function () {
-      _setFooterSwitch("", FooterType.empty);
-      _clearCalling();
+      setFooterSwitch("", FooterType.empty);
+      clearCalling();
     };
     // setMyId("-1");
-    _handleCallBtnOnClick(status.currentHmd);
+    handleCallBtnOnClick(status.currentHmd);
   }
   //通話中，自行掛斷 - Clear
   else if (status.callState == CallingEnum.online && endCallState == EndCallEnum.self) {
     console.log("通話中，自行掛斷");
-    _setFooterSwitch("", FooterType.empty);
+    setFooterSwitch("", FooterType.empty);
     sendEndCall(status.currentHmd);
     setCurrentHmd({});
   }
   // 通話中，被掛斷 - Declined
   else if (status.callState == CallingEnum.online && endCallState == EndCallEnum.hmd) {
     console.log("通話中，被掛斷");
-    _setFooterSwitch(status.currentHmd, FooterType.declined);
+    setFooterSwitch(status.currentHmd, FooterType.declined);
     document.getElementById("close_call_btn").onclick = function () {
-      _setFooterSwitch("", FooterType.empty);
-      _clearCalling();
+      setFooterSwitch("", FooterType.empty);
+      clearCalling();
     };
     // $("#modal_incoming_call").modal("hide");
-    _handleCallBtnOnClick(status.currentHmd);
+    handleCallBtnOnClick(status.currentHmd);
   }
   //其餘所有狀況 (切換頁面、來電拒接...等) - Empty
   else {
     console.log("其他掛斷狀況");
     sendEndCall(status.currentHmd);
-    _setFooterSwitch("", FooterType.empty);
+    setFooterSwitch("", FooterType.empty);
   }
   // 清空通話中資訊，UI調整
-  _clearCalling();
+  clearCalling();
 
   // 直接重整(不須Destroy janus)
   // setTimeout(() => {
@@ -474,8 +495,8 @@ export async function onWsMessage(data) {
     Cancel
     <span class="spinner-border spinner-border-sm ml-2" role="status" aria-hidden="true"></span>
     `;
-    _startCallState();
-    _enterCall(hmd);
+    enterCallState();
+    enterCalling(hmd);
   }
   async function _handleAnswerNo() {
     console.log("get no");
@@ -492,7 +513,7 @@ export async function onWsMessage(data) {
       display_name: data.sender_name,
       publish_id: parseInt(data.value.publishId),
     };
-    _setIncomingCallModal(hmd);
+    setIncomingCallModal(hmd);
   }
   function _handleDefault() {
     return 0;
@@ -547,41 +568,61 @@ export async function routinelyUpdateOnlineList() {
       handleOnlineListOnClick(status.online, status.callState);
     }, 300);
     //處理通話中的HMD突然下線
-    let isOnline = _checkCurrentHmdOnline(status.online, status.currentHmd);
+    let isOnline = checkCurrentHmdOnline(status.online, status.currentHmd);
     if (!isOnline) {
       if (status.callState != CallingEnum.none) endCall(EndCallEnum.hmd);
-      else _clearCalling();
+      else clearCalling();
     }
   }
   routinelyUpdateOnlineListFunc = setTimeout(routinelyUpdateOnlineList, 1000);
 }
 
-export function handleSettingBtnOnclick() {
-  let recordCheck = document.getElementById("record_check");
-  if (localStorage.getItem("isRecording") == 'true') {
-    recordCheck.checked = true;
-  } 
-  else if (localStorage.getItem("isRecording") == 'false') {
-    recordCheck.checked = false;
+export function initSettingModal() {
+  // button onclick
+  function _handleSettingBtnOnclick() {
+    document.getElementById("setting_btn").onclick = function () {
+      $("#modal_setting").modal("toggle");
+    };
   }
-  else recordCheck.checked = false;
+  function _handleSettingOnSubmit(displayNameText, recordCheck) {
+    document.getElementById("setting_form").onsubmit = function () {
+      // handle display name saving
+      localStorage.setItem("displayName", displayNameText.value);
+      setDisplayName(displayNameText.value);
+
+      // handle reocrdCheck status saving
+      if (recordCheck.checked) {
+        console.log("isRecording set to true");
+        setIsRecording(true);
+        localStorage.setItem("isRecording", true);
+      } else {
+        console.log("isRecording set to false");
+        setIsRecording(false);
+        localStorage.setItem("isRecording", false);
+      }
+      $("#modal_setting").modal("hide");
+    };
+  }
+
+  // 讀取網頁上的display name紀錄資訊
+  let displayNameText = document.getElementById("display_name_text");
+  if (localStorage.getItem("displayName") != null) {
+    displayNameText.value = localStorage.getItem("displayName");
+  } else {
+    displayNameText.value = "EA-Demo";
+  }
+  setDisplayName(displayNameText.value);
+
+  let recordCheck = document.getElementById("record_check");
+  // 讀取網頁上的isRecording紀錄資訊
+  if (localStorage.getItem("isRecording") == "true") {
+    recordCheck.checked = true;
+  } else if (localStorage.getItem("isRecording") == "false") {
+    recordCheck.checked = false;
+  } else recordCheck.checked = false;
 
   setIsRecording(recordCheck.checked);
 
-  recordCheck.onclick = function () {
-    if (this.checked) {
-      console.log("isRecording set to true");
-      setIsRecording(true)
-      localStorage.setItem("isRecording", true);
-    } else {
-      console.log("isRecording set to false");
-      setIsRecording(false)
-      localStorage.setItem("isRecording", false);
-    }
-  };
- 
-
-  document.getElementById("setting_btn").onclick = function () {
-    $("#modal_setting").modal("toggle");
-  };
+  _handleSettingBtnOnclick();
+  _handleSettingOnSubmit(displayNameText, recordCheck);
 }

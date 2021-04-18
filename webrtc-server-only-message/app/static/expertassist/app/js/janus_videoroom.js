@@ -89,7 +89,7 @@ export function connectJanus() {
                   request: "join",
                   room: 5566,
                   ptype: "publisher",
-                  display: "CC-Demo",
+                  display: status.diplayName,
                 };
                 // myusername = username;
                 console.log(myroom);

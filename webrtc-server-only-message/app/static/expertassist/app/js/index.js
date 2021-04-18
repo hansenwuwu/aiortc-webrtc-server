@@ -4,6 +4,7 @@ import * as modules from "./modules.js";
 import * as draw from "./draw.js";
 
 const init = async () => {
+  modules.initSettingModal();
   draw.init();
   // connectJanus();
   let onlineURL = isProduction
@@ -15,7 +16,6 @@ const init = async () => {
   console.log(status.online);
   modules.drawOnlineList(status.online);
   modules.handleOnlineListOnClick(status.online, status.callState);
-  modules.handleSettingBtnOnclick();
 };
 
 init();

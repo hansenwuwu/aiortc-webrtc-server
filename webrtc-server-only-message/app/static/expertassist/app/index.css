@@ -6,6 +6,7 @@ body {
   transition: 1s opacity;
   overflow: hidden;
   user-select: none;
+  min-width: 1170px;
 }
 body.fade-out {
   opacity: 0;
@@ -27,6 +28,11 @@ body.fade-out {
   border-radius: 10px;
   /* -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3); */
   background-color: #b9b9b9;
+}
+
+/* grayscale filter */
+.grayscale{
+  filter: grayscale(100%);
 }
 
 /* The sidebar menu */
@@ -73,24 +79,29 @@ body.fade-out {
 }
 
 /*--BUTTON--*/
+
+.btn-expert {
+  color: white;
+  border-radius: 30px;
+  background-color: #ffa617;
+  border-color: transparent;
+}
 @media (max-width: 1920px) {
   .btn-expert {
-    color: white;
-    border-radius: 30px;
-    background-color: #ffa617;
-    border-color: transparent;
     min-width: 120px;
-    font-size: 1.0em;
+    font-size: 1em;
   }
 }
 @media (max-width: 1680px) {
   .btn-expert {
-    color: white;
-    border-radius: 30px;
-    background-color: #ffa617;
-    border-color: transparent;
-    min-width: 120px;
-    font-size: 1.0em;
+    min-width: 100px;
+    font-size: 0.8em;
+  }
+}
+@media (max-width: 1300px) {
+  .btn-expert {
+    min-width: 80px;
+    font-size: 0.7em;
   }
 }
 
@@ -103,24 +114,6 @@ body.fade-out {
 .btn-expert:active {
   color: #fff;
   background-color: #b47715;
-}
-
-.btn-expert-dark {
-  color: #ffa617;
-  background-color: transparent;
-  border-color: #ffa617;
-  border-radius: 30px;
-  min-width: 120px;
-  font-weight: bold;
-}
-
-.btn-expert-dark:hover {
-  color: #ffa617;
-  background-color: transparent;
-  border-color: #ffa617;
-  border-radius: 30px;
-  min-width: 120px;
-  font-weight: bold;
 }
 
 .btn-answer-call {
@@ -141,25 +134,48 @@ body.fade-out {
   background-color: #337148;
 }
 
+.btn-cancel-call {
+  color: white;
+  border-radius: 30px;
+  background-color: #ff6a6a;
+  border-color: transparent;
+}
 @media (max-width: 1920px) {
-  .btn-reject-call {
-    color: white;
-    border-radius: 30px;
-    background-color: #ff6a6a;
-    border-color: transparent;
+  .btn-cancel-call {
     min-width: 120px;
+    font-size: 1em;
   }
 }
 @media (max-width: 1680px) {
-  .btn-reject-call {
-    color: white;
-    border-radius: 30px;
-    background-color: #ff6a6a;
-    border-color: transparent;
-    min-width: 120px;
+  .btn-cancel-call {
+    min-width: 100px;
+    font-size: 0.8em;
+  }
+}
+@media (max-width: 1300px) {
+  .btn-cancel-call {
+    min-width: 80px;
+    font-size: 0.7em;
   }
 }
 
+.btn-cancel-call:hover {
+  color: white;
+  background-color: #b55353;
+}
+
+.btn-cancel-call:active {
+  color: white;
+  background-color: #723b3b;
+}
+
+.btn-reject-call {
+  color: white;
+  border-radius: 30px;
+  background-color: #ff6a6a;
+  border-color: transparent;
+  min-width: 120px;
+}
 .btn-reject-call:hover {
   color: white;
   background-color: #b55353;
@@ -168,11 +184,6 @@ body.fade-out {
 .btn-reject-call:active {
   color: white;
   background-color: #723b3b;
-}
-
-.btn-outline-dark {
-  border-radius: 30px;
-  min-width: 120px;
 }
 
 #cancel_logout_btn {
@@ -189,25 +200,49 @@ body.fade-out {
   border-color: #e29d2e;
   /*set the color you want here*/
 }
+/* For confirm button */
+.btn-confirm {
+  color: white;
+  border-radius: 30px;
+  background-color: #233e58;
+  border-color: white;
+  min-width: 100px;
+  font-size: 1em;
+}
+.btn-confirm:hover {
+  color: #fff;
+  background-color: #3f5367;
+  /*set the color you want here*/
+}
 
+.btn-confirm:active {
+  color: #fff;
+  background-color: #61778e;
+}
+
+/* For close button */
+.btn-outline-blue {
+  color: white;
+  border-radius: 30px;
+  background-color: #233e58;
+  border-color: white;
+}
 @media (max-width: 1920px) {
   .btn-outline-blue {
-    color: white;
-    border-radius: 30px;
-    background-color: #233e58;
-    border-color: white;
     min-width: 120px;
-    font-size: 1.1em;
+    font-size: 1em;
   }
 }
 @media (max-width: 1680px) {
   .btn-outline-blue {
-    color: white;
-    border-radius: 30px;
-    background-color: #233e58;
-    border-color: white;
-    min-width: 120px;
-    font-size: 1.1em;
+    min-width: 100px;
+    font-size: 0.8em;
+  }
+}
+@media (max-width: 1300px) {
+  .btn-outline-blue {
+    min-width: 80px;
+    font-size: 0.7em;
   }
 }
 
@@ -248,15 +283,27 @@ body.fade-out {
 
 .btn-outline-mark {
   color: #f79800;
-  font-weight: 800 !important;
   border-radius: 30px;
   background-color: #f6e8d1;
   border: 2px solid #f79800;
-  min-width: 130px;
-  width: 140px;
   margin-top: auto;
   margin-bottom: auto;
-  font-size: 16px;
+}
+@media (max-width: 1920px) {
+  .btn-outline-mark {
+    font-weight: 800 !important;
+    min-width: 120px;
+    width: 140px;
+    font-size: 1em;
+  }
+}
+@media (max-width: 1680px) {
+  .btn-outline-mark {
+    font-weight: 800 !important;
+    min-width: 100px;
+    width: 120px;
+    font-size: 0.9em;
+  }
 }
 .btn-outline-mark:hover {
   color: #f79800;
@@ -267,19 +314,12 @@ body.fade-out {
   background-color: #f6c16e;
 }
 
-/*--Resolution Adjust--*/
-@media (max-width: 1920px) {
-  .col-onlinelist {
-    position: relative !important;
-    margin-left: -5% !important;
-  }
+.col-onlinelist {
+  /* position: relative !important; */
+  margin-left: -5% !important;
 }
-
-@media (max-width: 1680px) {
-  .col-onlinelist {
-    position: relative !important;
-    margin-left: -5% !important;
-  }
+.fas.disabled {
+  color: #999999;
 }
 
 /*---CONTENT---*/
@@ -352,7 +392,12 @@ body.fade-out {
 .mark-area {
   border: none;
   color: #9c9c9c;
+  min-width: 440px;
 }
+.mark-area.picture-area {
+  min-width: 0;
+}
+
 .mark-area-head {
   padding-top: 6px;
   padding-bottom: 6px;
@@ -361,6 +406,12 @@ body.fade-out {
   /* height: 16vh; */
   border: none;
   background-color: #f4f6f9;
+}
+@media (max-width: 1680px) {
+  .mark-area-body {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
 }
 
 .mark-btn:hover {
