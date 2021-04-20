@@ -1,20 +1,16 @@
 import { isProduction, status, EndCallEnum } from "./manager.js";
-import { endCall } from "./modules.js"; //為了處理janus斷開的特殊狀況
+import { handleEndCall } from "./modules.js"; //為了處理janus斷開的特殊狀況
 
 var janusServer = isProduction
   ? `https://${status.url}/j/janus`
   : `http://${status.url}:8088/janus`;
 
 var janus = null;
-var janus_roomList = null;
 var sfutest = null;
 var opaqueId = "videoroomtest-" + Janus.randomString(12);
 
 var myroom = 5566; // Demo room
 if (getQueryStringValue("room") !== "") myroom = parseInt(getQueryStringValue("room"));
-var roomList = [];
-var currentRoomId = -1;
-var currentRoomDescription = "";
 
 var myusername = null;
 var myid = null;
@@ -46,7 +42,6 @@ export function getMyId() {
 export function setMyId(id) {
   myid = id;
 }
-
 export function destroyJanus() {
   if (janus != null) janus.destroy();
 }
@@ -61,9 +56,6 @@ export function connectJanus() {
   Janus.init({
     debug: "all",
     callback: function () {
-      // Use a button to start the demo
-      // $(this).attr("disabled", true).unbind("click");
-      // Make sure the browser supports WebRTC
       if (!Janus.isWebrtcSupported()) {
         console.log("No WebRTC support... ");
         return;
@@ -77,13 +69,12 @@ export function connectJanus() {
             plugin: "janus.plugin.videoroom",
             opaqueId: opaqueId,
             success: function (pluginHandle) {
-              // $('#details').remove();
               sfutest = pluginHandle;
               Janus.log(
                 "Plugin attached! (" + sfutest.getPlugin() + ", id=" + sfutest.getId() + ")"
               );
               Janus.log("  -- This is a publisher/manager");
-              // First, check the Room list to get the room id
+              // Join the 5566 room directly
               setTimeout(() => {
                 var register = {
                   request: "join",
@@ -91,83 +82,14 @@ export function connectJanus() {
                   ptype: "publisher",
                   display: status.diplayName,
                 };
-                // myusername = username;
-                console.log(myroom);
                 sfutest.send({ message: register });
               }, 1000);
-
-              //   var register = { request: "list" };
-              //   sfutest.send({
-              // message: register,
-              // success: function (result) {
-              //   if (!result) {
-              //     console.log("error!");
-              //     resolve();
-              //     return;
-              //   }
-              //   if (result["list"]) {
-              //     roomList = result["list"];
-              //     console.log(roomList);
-              //     // default room
-              //     if (roomList.length > 0) {
-              //       currentRoomId = roomList[0].room;
-              //       currentRoomDescription = roomList[i].description;
-              //     }
-              //     for (let i = 0; i < roomList.length; i++) {
-              //       if (roomList[i].description == currentHmd.name) {
-              //         currentRoomId = roomList[i].room;
-              //         currentRoomDescription = roomList[i].description;
-              //       }
-              //     }
-              //     // After getting the needed information, joining the room
-              //     var username = "test-cc";
-              //     myroom = 5566;
-              //     // myroom = parseInt(currentRoomId);
-              //     myusername = username;
-              //     // var register = { request: "list" };
-              //     var register = {
-              //       request: "join",
-              //       room: myroom,
-              //       ptype: "publisher",
-              //       display: username,
-              //     };
-              //     myusername = username;
-              //     console.log(myroom);
-              //     sfutest.send({ message: register });
-              //   }
-              // },
-              //   });
-
-              // $('#username').focus();
-              $("#start")
-                .removeAttr("disabled")
-                .html("Stop")
-                .click(function () {
-                  $(this).attr("disabled", true);
-                  janus.destroy();
-                });
             },
             error: function (error) {
               Janus.error("  -- Error attaching plugin...", error);
             },
             consentDialog: function (on) {
               Janus.debug("Consent dialog should be " + (on ? "on" : "off") + " now");
-              // if(on) {
-              // 	// Darken screen and show hint
-              // 	$.blockUI({
-              // 		message: '<div><img src="up_arrow.png"/></div>',
-              // 		css: {
-              // 			border: 'none',
-              // 			padding: '15px',
-              // 			backgroundColor: 'transparent',
-              // 			color: '#aaa',
-              // 			top: '10px',
-              // 			left: (navigator.mozGetUserMedia ? '-100px' : '300px')
-              // 		} });
-              // } else {
-              // 	// Restore screen
-              // 	$.unblockUI();
-              // }
             },
             iceState: function (state) {
               if (state == "disconnected") isJanusEnd = true;
@@ -205,73 +127,6 @@ export function connectJanus() {
               Janus.debug("Event: " + event);
               if (event) {
                 if (event === "joined") {
-                  // Successfully joined, negotiate WebRTC now
-                  //   if (msg["id"]) {
-                  //     myid = msg["private_id"];
-                  //     Janus.log("Successfully joined room " + msg["room"] + " with ID " + myid);
-                  //     if (!webrtcUp) {
-                  //       webrtcUp = true;
-                  //       // Publish our stream
-                  //       sfutest.createOffer({
-                  //         media: { video: false }, // This is an audio only room
-                  //         success: function (jsep) {
-                  //           Janus.debug("Got SDP!", jsep);
-                  //           var publish = {
-                  //             request: "configure",
-                  //             muted: false,
-                  //           };
-                  //           sfutest.send({ message: publish, jsep: jsep });
-                  //         },
-                  //         error: function (error) {
-                  //           Janus.error("WebRTC error:", error);
-                  //         },
-                  //       });
-                  //     }
-                  //   }
-                  //   // Any room participant?
-                  //   if (msg["participants"]) {
-                  //     var list = msg["participants"];
-                  //     Janus.debug("Got a list of participants:", list);
-                  //     for (var f in list) {
-                  //       var id = list[f]["id"];
-                  //       var display = list[f]["display"];
-                  //       var setup = list[f]["setup"];
-                  //       var muted = list[f]["muted"];
-                  //       Janus.debug(
-                  //         "  >> [" +
-                  //           id +
-                  //           "] " +
-                  //           display +
-                  //           " (setup=" +
-                  //           setup +
-                  //           ", muted=" +
-                  //           muted +
-                  //           ")"
-                  //       );
-                  //       if ($("#rp" + id).length === 0) {
-                  //         // Add to the participants list
-                  //         // $("#list").append(
-                  //         //   '<li id="rp' +
-                  //         //     id +
-                  //         //     '" class="list-group-item">' +
-                  //         //     display +
-                  //         //     ' <i class="absetup fa fa-chain-broken"></i>' +
-                  //         //     ' <i class="abmuted fa fa-microphone-slash"></i></li>'
-                  //         // );
-                  //         $("#rp" + id + " > i").hide();
-                  //       }
-                  //       if (muted === true || muted === "true")
-                  //         $("#rp" + id + " > i.abmuted")
-                  //           .removeClass("hide")
-                  //           .show();
-                  //       else $("#rp" + id + " > i.abmuted").hide();
-                  //       if (setup === true || setup === "true") $("#rp" + id + " > i.absetup").hide();
-                  //       else
-                  //         $("#rp" + id + " > i.absetup")
-                  //           .removeClass("hide")
-                  //           .show();
-                  //     }
-                  //   }
                   // Publisher/manager created, negotiate WebRTC and attach to existing feeds, if any
                   myid = msg["id"]; // publish id
                   mypvtid = msg["private_id"];
@@ -304,11 +159,6 @@ export function connectJanus() {
                           video +
                           ")"
                       );
-                      //   newRemoteFeed(id, display, audio, video);
-                      // setTimeout(() => {
-                      //   console.log(`video:${video}`)
-                      //   newRemoteFeed(id, display, audio, video);
-                      // }, 10000);
                     }
                   }
                 } else if (event === "roomchanged") {
@@ -337,15 +187,6 @@ export function connectJanus() {
                           ")"
                       );
                       if ($("#rp" + id).length === 0) {
-                        // Add to the participants list
-                        // $("#list").append(
-                        //   '<li id="rp' +
-                        //     id +
-                        //     '" class="list-group-item">' +
-                        //     display +
-                        //     ' <i class="absetup fa fa-chain-broken"></i>' +
-                        //     ' <i class="abmuted fa fa-microphone-slash"></i></li>'
-                        // );
                         $("#rp" + id + " > i").hide();
                       }
                       if (muted === true || muted === "true")
@@ -457,82 +298,6 @@ export function connectJanus() {
                       bootbox.alert(msg["error"]);
                     }
                   }
-
-                  //   if (msg["participants"]) {
-                  //     var list = msg["participants"];
-                  //     Janus.debug("Got a list of participants:", list);
-                  //     for (var f in list) {
-                  //       var id = list[f]["id"];
-                  //       var display = list[f]["display"];
-                  //       var setup = list[f]["setup"];
-                  //       var muted = list[f]["muted"];
-                  //       Janus.debug(
-                  //         "  >> [" +
-                  //           id +
-                  //           "] " +
-                  //           display +
-                  //           " (setup=" +
-                  //           setup +
-                  //           ", muted=" +
-                  //           muted +
-                  //           ")"
-                  //       );
-                  //       if ($("#rp" + id).length === 0) {
-                  //         // Add to the participants list
-                  //         // $("#list").append(
-                  //         //   '<li id="rp' +
-                  //         //     id +
-                  //         //     '" class="list-group-item">' +
-                  //         //     display +
-                  //         //     ' <i class="absetup fa fa-chain-broken"></i>' +
-                  //         //     ' <i class="abmuted fa fa-microphone-slash"></i></li>'
-                  //         // );
-                  //         $("#rp" + id + " > i").hide();
-                  //       }
-                  //       if (muted === true || muted === "true")
-                  //         $("#rp" + id + " > i.abmuted")
-                  //           .removeClass("hide")
-                  //           .show();
-                  //       else $("#rp" + id + " > i.abmuted").hide();
-                  //       if (setup === true || setup === "true") $("#rp" + id + " > i.absetup").hide();
-                  //       else
-                  //         $("#rp" + id + " > i.absetup")
-                  //           .removeClass("hide")
-                  //           .show();
-                  //     }
-                  //   } else if (msg["error"]) {
-                  //     if (msg["error_code"] === 485) {
-                  //       // This is a "no such room" error: give a more meaningful description
-                  //       console.log(
-                  //         "<p>Apparently room <code>" +
-                  //           myroom +
-                  //           "</code> (the one this demo uses as a test room) " +
-                  //           "does not exist...</p><p>Do you have an updated <code>janus.plugin.audiobridge.jcfg</code> " +
-                  //           "configuration file? If not, make sure you copy the details of room <code>" +
-                  //           myroom +
-                  //           "</code> " +
-                  //           "from that sample in your current configuration file, then restart Janus and try again."
-                  //       );
-                  //     } else {
-                  //       console.log(msg["error"]);
-                  //     }
-                  //     return;
-                  //   }
-                  //   // Any new feed to attach to?
-                  //   if (msg["leaving"]) {
-                  //     // One of the participants has gone away?
-                  //     var leaving = msg["leaving"];
-                  //     Janus.log(
-                  //       "Participant left: " +
-                  //         leaving +
-                  //         " (we have " +
-                  //         $("#rp" + leaving).length +
-                  //         " elements with ID #rp" +
-                  //         leaving +
-                  //         ")"
-                  //     );
-                  //     $("#rp" + leaving).remove();
-                  //   }
                 }
               }
               if (jsep) {
@@ -631,37 +396,7 @@ export function connectJanus() {
               }
             },
             onremotestream: function (stream) {
-              // $("#room").removeClass("hide").show();
-              //   var addButtons = false;
-              //   if ($("#roomaudio").length === 0) {
-              //     addButtons = true;
-              //     $("#mixedaudio").append(
-              //       '<audio class="rounded centered" id="roomaudio" width="100%" height="100%" autoplay/>'
-              //     );
-              //   }
-              //   Janus.attachMediaStream($("#roomaudio").get(0), stream);
-              //   if (!addButtons) return;
-              // Mute button
-              //   audioenabled = true;
-              // $("#toggleaudio")
-              //   .click(function () {
-              //     audioenabled = !audioenabled;
-              //     if (audioenabled)
-              //       $("#toggleaudio")
-              //         .html("Mute")
-              //         .removeClass("btn-success")
-              //         .addClass("btn-danger");
-              //     else
-              //       $("#toggleaudio")
-              //         .html("Unmute")
-              //         .removeClass("btn-danger")
-              //         .addClass("btn-success");
-              //     sfutest.send({
-              //       message: { request: "configure", muted: !audioenabled },
-              //     });
-              //   })
-              //   .removeClass("hide")
-              //   .show();
+      
             },
             oncleanup: function () {
               webrtcUp = false;
@@ -982,7 +717,7 @@ export function newRemoteFeed(id, display, audio, video) {
     oncleanup: function () {
       Janus.log(" ::: Got a cleanup notification (remote feed " + id + ") :::");
       // 斷開通話
-      endCall(EndCallEnum.hmd);
+      handleEndCall(EndCallEnum.hmd);
       console.log("Janus 中斷，結束通話")
 
       if (remoteFeed.spinner) remoteFeed.spinner.stop();

@@ -421,7 +421,7 @@ function Rect(x, y, w, h, color, lineWidth) {
           // console.log(bytes);
           bytes = bytes.replace("data:image/jpeg;base64,", "");
           bytes = bytes.replace("data:image/png;base64,", "");
-          console.log(bytes)
+          // console.log(bytes)
           sendImage(status.currentHmd, bytes);
           sender.value = "";
           return true;

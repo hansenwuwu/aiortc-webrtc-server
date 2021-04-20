@@ -1,20 +1,20 @@
 //----------------------- Useful Functions ---------------------------
 // Run callBack after elementId exists
-// function waitForElement(elementId, callBack) {
-//     //console.log('Check Element');
-//     return new Promise(function (resolve, reject) {
-//       window.setTimeout(function () {
-//         //console.log("test");
-//         var element = document.getElementById(elementId);
-//         if (element) {
-//           callBack(elementId, element);
-//           resolve();
-//         } else {
-//           waitForElement(elementId, callBack);
-//         }
-//       }, 100);
-//     });
-//   }
+function waitForElement(elementId, callBack) {
+  //console.log('Check Element');
+  return new Promise(function (resolve, reject) {
+    window.setTimeout(function () {
+      //console.log("test");
+      var element = document.getElementById(elementId);
+      if (element) {
+        callBack(elementId, element);
+        resolve();
+      } else {
+        waitForElement(elementId, callBack);
+      }
+    }, 100);
+  });
+}
 
 export async function waitUntil(condition, time) {
   return await new Promise((resolve) => {
@@ -95,4 +95,3 @@ export function getDatetime() {
 
   return datetime;
 }
-

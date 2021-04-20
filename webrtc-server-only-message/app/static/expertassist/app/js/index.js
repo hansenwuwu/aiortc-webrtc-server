@@ -4,9 +4,10 @@ import * as modules from "./modules.js";
 import * as draw from "./draw.js";
 
 const init = async () => {
+  // initialize
   modules.initSettingModal();
   draw.init();
-  // connectJanus();
+  // Get the online list
   let onlineURL = isProduction
     ? `https://${status.url}/f/api/v1/online`
     : `http://${status.url}:5000/api/v1/online`;

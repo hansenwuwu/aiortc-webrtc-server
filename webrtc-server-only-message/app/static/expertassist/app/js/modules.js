@@ -101,8 +101,7 @@ function setFooterSwitch(hmd, callState) {
         
       </div>
       <div class="col-12 text-center mt-1">
-          <button class="btn btn-outline-blue font-weight-bold float-left" style="margin-left:2vw" id="close_call_btn">Close</button>
-          <button class="btn btn-expert font-weight-bold float-right"  style="margin-right:2vw"id="call_btn">Redial</button>
+          <button class="btn btn-outline-blue font-weight-bold" id="close_call_btn">Close</button>
       </div>
     </div>`;
   }
@@ -116,8 +115,7 @@ function setFooterSwitch(hmd, callState) {
       
     </div>
     <div class="col-12 text-center mt-1">
-        <button class="btn btn-outline-blue font-weight-bold float-left" style="margin-left:2vw" id="close_call_btn">Close</button>
-        <button class="btn btn-expert font-weight-bold float-right"  style="margin-right:2vw"id="call_btn">Redial</button>
+        <button class="btn btn-outline-blue font-weight-bold" id="close_call_btn">Close</button>
     </div>
   </div>`;
   }
@@ -158,10 +156,10 @@ async function handleCallBtnOnClick(hmd) {
     // button handle
     document.getElementById("calling_cancel_btn").onclick = async function () {
       console.log("觸發endCall, 取消通話");
-      endCall(EndCallEnum.self);
+      handleEndCall(EndCallEnum.self);
     };
     callTimeout = setTimeout(() => {
-      endCall(EndCallEnum.timeout);
+      handleEndCall(EndCallEnum.timeout);
       console.log("觸發endCall, 無回應");
     }, 15000);
   };
@@ -186,10 +184,10 @@ function clearCallState() {
   hideToolbox();
   document.getElementById("ADAT_bg").removeAttribute("hidden");
 }
-
+// 完全結束通話
 function clearCalling() {
   console.log("正式結束通話");
-  setCallState(CallingEnum.none); // 不能太早轉為none，需要用於判定狀態
+  setCallState(CallingEnum.end); // 不能太早轉為none，需要用於判定狀態
   // setCurrentHmd({});
   for (let i in status.online) {
     $("#hmd_" + status.online[i].id).removeClass("active");
@@ -224,7 +222,7 @@ async function enterCalling(hmd) {
 
     document.getElementById("end_call_btn").onclick = async function () {
       console.log("觸發endCall, 自行掛斷");
-      endCall(EndCallEnum.self);
+      handleEndCall(EndCallEnum.self);
     };
   }, 500);
 
@@ -243,10 +241,8 @@ async function enterCalling(hmd) {
 function setIncomingCallModal(hmd) {
   function _handleAnswerBtnOnClick() {
     document.getElementById("confirm_incoming_btn").onclick = async function () {
-      // 改變設定，避免timeout
       setCurrentHmd(hmd);
       enterCallState();
-
       connectJanus();
       // showLoading();
       showIncomingCallLoading();
@@ -354,7 +350,7 @@ export function handleOnlineListOnClick(onlineList, callState) {
         $("#hmd_" + onlineList[i].id).removeClass("active");
       }
       $(this).toggleClass("active");
-      // 只有目前未和其他人通話中，點擊才可觸發
+      // 只有目前未通話前，點擊才可觸發 (通話後須重整)
       if (callState == CallingEnum.none) {
         setCurrentHmd(onlineList[i]);
         // show call area
@@ -365,7 +361,8 @@ export function handleOnlineListOnClick(onlineList, callState) {
   }
 }
 
-export async function endCall(endCallState) {
+// handle differenct types of endCall
+export async function handleEndCall(endCallState) {
   // ------ Destroy Janus (暫時先不管什麼情況都destroy) ------
   try {
     destroyJanus();
@@ -420,6 +417,9 @@ export async function endCall(endCallState) {
     setFooterSwitch("", FooterType.empty);
     sendEndCall(status.currentHmd);
     setCurrentHmd({});
+    setTimeout(() => {
+      location.reload();
+    }, 100);
   }
   // 等待接聽時，被掛斷 - Declined
   else if (status.callState == CallingEnum.waiting && endCallState == EndCallEnum.hmd) {
@@ -431,9 +431,10 @@ export async function endCall(endCallState) {
     document.getElementById("close_call_btn").onclick = function () {
       setFooterSwitch("", FooterType.empty);
       clearCalling();
+      setTimeout(() => {
+        location.reload();
+      }, 100);
     };
-    // $("#modal_incoming_call").modal("hide");
-    handleCallBtnOnClick(status.currentHmd);
   }
   // 等待接聽時，Timeout - No Response
   else if (status.callState == CallingEnum.waiting && endCallState == EndCallEnum.timeout) {
@@ -443,9 +444,10 @@ export async function endCall(endCallState) {
     document.getElementById("close_call_btn").onclick = function () {
       setFooterSwitch("", FooterType.empty);
       clearCalling();
+      setTimeout(() => {
+        location.reload();
+      }, 100);
     };
-    // setMyId("-1");
-    handleCallBtnOnClick(status.currentHmd);
   }
   //通話中，自行掛斷 - Clear
   else if (status.callState == CallingEnum.online && endCallState == EndCallEnum.self) {
@@ -453,6 +455,9 @@ export async function endCall(endCallState) {
     setFooterSwitch("", FooterType.empty);
     sendEndCall(status.currentHmd);
     setCurrentHmd({});
+    setTimeout(() => {
+      location.reload();
+    }, 100);
   }
   // 通話中，被掛斷 - Declined
   else if (status.callState == CallingEnum.online && endCallState == EndCallEnum.hmd) {
@@ -461,15 +466,19 @@ export async function endCall(endCallState) {
     document.getElementById("close_call_btn").onclick = function () {
       setFooterSwitch("", FooterType.empty);
       clearCalling();
+      setTimeout(() => {
+        location.reload();
+      }, 100);
     };
-    // $("#modal_incoming_call").modal("hide");
-    handleCallBtnOnClick(status.currentHmd);
   }
   //其餘所有狀況 (切換頁面、來電拒接...等) - Empty
   else {
     console.log("其他掛斷狀況");
     sendEndCall(status.currentHmd);
     setFooterSwitch("", FooterType.empty);
+    setTimeout(() => {
+      location.reload();
+    }, 100);
   }
   // 清空通話中資訊，UI調整
   clearCalling();
@@ -500,11 +509,11 @@ export async function onWsMessage(data) {
   }
   async function _handleAnswerNo() {
     console.log("get no");
-    endCall(EndCallEnum.hmd);
+    handleEndCall(EndCallEnum.hmd);
   }
   async function _handleHangUp() {
     console.log("觸發endCall，收到HMD端'No'，結束通話");
-    endCall(EndCallEnum.hmd);
+    handleEndCall(EndCallEnum.hmd);
   }
   function _handleIncomingCall() {
     // console.log(data)
@@ -570,13 +579,14 @@ export async function routinelyUpdateOnlineList() {
     //處理通話中的HMD突然下線
     let isOnline = checkCurrentHmdOnline(status.online, status.currentHmd);
     if (!isOnline) {
-      if (status.callState != CallingEnum.none) endCall(EndCallEnum.hmd);
+      if (status.callState != CallingEnum.none && status.callState != CallingEnum.end) handleEndCall(EndCallEnum.hmd);
       else clearCalling();
     }
   }
   routinelyUpdateOnlineListFunc = setTimeout(routinelyUpdateOnlineList, 1000);
 }
 
+// init the setting modal
 export function initSettingModal() {
   // button onclick
   function _handleSettingBtnOnclick() {

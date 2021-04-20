@@ -4,6 +4,7 @@ const CallingEnum = Object.freeze({
   none: 0,
   waiting: 1,
   online: 2,
+  end: 3, //進到這階段，需要重新整理才能重call(按下close會重整)
 });
 
 const EndCallEnum = Object.freeze({
