@@ -98,6 +98,7 @@ async def websocket_endpoint(websocket: WebSocket, device_type: str, client_id: 
     try:
         while True:
             data = await websocket.receive_text()
+            print(data)
             try:
                 msg = json.loads(data)
                 if 'type' in msg:

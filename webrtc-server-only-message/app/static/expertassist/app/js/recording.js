@@ -72,7 +72,7 @@ async function record(stream) {
   }, 1000);
   recorder.stop();
   // wait for the file to save
-  await common.timeout(2000);
+  await common.timeout(1000);
   return data;
   //return Promise.all([stopped, recorded]).then(() => data);
 }

@@ -33,6 +33,7 @@ const FooterType = Object.freeze({
   empty: 3,
   declined: 4,
   timeout: 5,
+  selfEnd: 6,
 });
 var routinelyUpdateOnlineListFunc;
 
@@ -119,6 +120,21 @@ function setFooterSwitch(hmd, callState) {
     </div>
   </div>`;
   }
+  function _setSelfEndFooter() {
+    document.getElementById("hmd_list_card_foot").style.backgroundColor = "#233E58";
+    document.getElementById("hmd_list_card_foot").innerHTML = `<div class="row">
+      <div class="col-12 text-center mt-4">
+          <i class="fas fa-circle fa-xs mr-2"
+              style="transform: translate(0px, -2px);color: #8BFFA1;"></i>
+          <p class="p-calling-hmd">${hmd.display_name}</p>
+          <p class="p-calling-warning">Call End</p>
+        
+      </div>
+      <div class="col-12 text-center mt-1">
+          <button class="btn btn-outline-blue font-weight-bold" id="close_call_btn">Close</button>
+      </div>
+    </div>`;
+  }
   var footerMap = {
     0: _setInitFooter,
     1: _setWaitingFooter,
@@ -126,6 +142,7 @@ function setFooterSwitch(hmd, callState) {
     3: _setEmptyFooter,
     4: _setDeclinedFooter,
     5: _setTimeoutFooter,
+    6: _setSelfEndFooter,
   };
   return footerMap[callState]();
 }
@@ -194,6 +211,9 @@ function clearCalling() {
   }
   handleOnlineListOnClick(status.online, status.callState);
   turnOnSettingBtn();
+  setTimeout(() => {
+    location.reload();
+  }, 100);
 }
 
 // 先改變state
@@ -203,6 +223,7 @@ function enterCallState() {
   clearTimeout(callTimeout);
   clearInterval(timer);
   turnOffSettingBtn();
+  handleOnlineListOnClick(status.online, status.callState)
 }
 
 // 正式開始通話的處理
@@ -277,6 +298,10 @@ function setIncomingCallModal(hmd) {
   // handle onclick
   _handleAnswerBtnOnClick();
   _handleAnswerNo();
+  callTimeout = setTimeout(() => {
+    $("#modal_incoming_call").modal("hide")
+    console.log("未回應HMD，自動結束");
+  }, 15000);
 }
 
 function checkCurrentHmdOnline(onlineList, hmd) {
@@ -431,9 +456,6 @@ export async function handleEndCall(endCallState) {
     document.getElementById("close_call_btn").onclick = function () {
       setFooterSwitch("", FooterType.empty);
       clearCalling();
-      setTimeout(() => {
-        location.reload();
-      }, 100);
     };
   }
   // 等待接聽時，Timeout - No Response
@@ -444,20 +466,22 @@ export async function handleEndCall(endCallState) {
     document.getElementById("close_call_btn").onclick = function () {
       setFooterSwitch("", FooterType.empty);
       clearCalling();
-      setTimeout(() => {
-        location.reload();
-      }, 100);
     };
   }
   //通話中，自行掛斷 - Clear
   else if (status.callState == CallingEnum.online && endCallState == EndCallEnum.self) {
     console.log("通話中，自行掛斷");
-    setFooterSwitch("", FooterType.empty);
+    setFooterSwitch(status.currentHmd, FooterType.selfEnd);
     sendEndCall(status.currentHmd);
-    setCurrentHmd({});
-    setTimeout(() => {
-      location.reload();
-    }, 100);
+    setCurrentHmd({})
+    document.getElementById("close_call_btn").onclick = function () {
+      setFooterSwitch("", FooterType.empty);
+      clearCalling();
+    };
+    // setCurrentHmd({});
+    // setTimeout(() => {
+    //   location.reload();
+    // }, 3000);
   }
   // 通話中，被掛斷 - Declined
   else if (status.callState == CallingEnum.online && endCallState == EndCallEnum.hmd) {
@@ -466,9 +490,6 @@ export async function handleEndCall(endCallState) {
     document.getElementById("close_call_btn").onclick = function () {
       setFooterSwitch("", FooterType.empty);
       clearCalling();
-      setTimeout(() => {
-        location.reload();
-      }, 100);
     };
   }
   //其餘所有狀況 (切換頁面、來電拒接...等) - Empty
@@ -481,7 +502,7 @@ export async function handleEndCall(endCallState) {
     }, 100);
   }
   // 清空通話中資訊，UI調整
-  clearCalling();
+  // clearCalling();
 
   // 直接重整(不須Destroy janus)
   // setTimeout(() => {
@@ -569,7 +590,10 @@ export async function routinelyUpdateOnlineList() {
     : `http://${status.url}:5000/api/v1/online`;
   let newOnlineList = await api.getOnlineList(onlineURL);
   // If the json file is updated, update the online list
-  if (JSON.stringify(newOnlineList) != JSON.stringify(status.online)) {
+  if (
+    JSON.stringify(newOnlineList) != JSON.stringify(status.online)
+  ) {
+    let isOriginalEmpty = status.online.length == 0?true:false;
     setOnlineList(newOnlineList);
     console.log(status.online);
     drawOnlineList(status.online);
@@ -578,8 +602,9 @@ export async function routinelyUpdateOnlineList() {
     }, 300);
     //處理通話中的HMD突然下線
     let isOnline = checkCurrentHmdOnline(status.online, status.currentHmd);
-    if (!isOnline) {
-      if (status.callState != CallingEnum.none && status.callState != CallingEnum.end) handleEndCall(EndCallEnum.hmd);
+    if (!isOnline && !isOriginalEmpty) {
+      if (status.callState != CallingEnum.none && status.callState != CallingEnum.end)
+        handleEndCall(EndCallEnum.hmd);
       else clearCalling();
     }
   }
