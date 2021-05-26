@@ -586,14 +586,14 @@ export async function routinelyUpdateOnlineList() {
   clearTimeout(routinelyUpdateOnlineListFunc);
 
   let onlineURL = isProduction
-    ? `https://${status.url}/f/api/v1/online`
+    ? (status.isSSL ? `https://${status.url}/f/api/v1/online` : `http://${status.url}/f/api/v1/online`)
     : `http://${status.url}:5000/api/v1/online`;
   let newOnlineList = await api.getOnlineList(onlineURL);
   // If the json file is updated, update the online list
   if (
     JSON.stringify(newOnlineList) != JSON.stringify(status.online)
   ) {
-    let isOriginalEmpty = status.online.length == 0?true:false;
+    let isOriginalEmpty = status.online.length == 0 ? true : false;
     setOnlineList(newOnlineList);
     console.log(status.online);
     drawOnlineList(status.online);

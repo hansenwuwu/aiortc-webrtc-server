@@ -9,7 +9,7 @@ const init = async () => {
   draw.init();
   // Get the online list
   let onlineURL = isProduction
-    ? `https://${status.url}/f/api/v1/online`
+    ? (status.isSSL ? `https://${status.url}/f/api/v1/online` : `http://${status.url}/f/api/v1/online`)
     : `http://${status.url}:5000/api/v1/online`;
   let data = await api.getOnlineList(onlineURL);
   setOnlineList(data);

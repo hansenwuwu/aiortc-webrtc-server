@@ -1,14 +1,23 @@
 var server = null;
+var server_name = "192.168.4.49";
+var isSSL = false;
+
 if (window.location.protocol === 'http:') {
 	// server = "http://" + "192.168.4.26" + ":8088/janus";
 	// server = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:8088/janus";
-	server = "https://adatea.sytes.net/j/janus";
+	if (isSSL === true) server = `https://${server_name}/j/janus`;
+	else server = `http://${server_name}/j/janus`;
 }
 else {
 	// server = "http://" + "192.168.4.26" + ":8088/janus";
 	// server = "http://ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com:8088/janus";
-	server = "https://adatea.sytes.net/j/janus";
+	if (isSSL === true) server = `https://${server_name}/j/janus`;
+	else server = `http://${server_name}/j/janus`;
 }
+
+var online_url = "";
+if (isSSL === true) online_url = `https://${server_name}/f/api/v1/online`;
+else online_url = `http://${server_name}/f/api/v1/online`;
 
 var janus = null;
 var sfutest = null;
@@ -43,8 +52,7 @@ $(document).ready(function () {
 					server: server,
 					success: function () {
 						// get online list
-						const url = "https://adatea.sytes.net/f/api/v1/online";
-						$.get(url, function (data) {
+						$.get(online_url, function (data) {
 							// console.log('online list: ', data);
 							// $('#onlineList').empty();
 							(data.online).forEach(element => {

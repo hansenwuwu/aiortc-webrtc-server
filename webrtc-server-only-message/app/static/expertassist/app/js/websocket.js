@@ -4,7 +4,7 @@ import { isProduction, status } from "./manager.js";
 let randId = Math.floor(Math.random() * 100000);
 console.log(`CC id:${randId}`);
 var wsURL = isProduction
-  ? `wss://${status.url}/f/wss/adbcc/${randId}/${status.diplayName}/0/0`
+  ? (status.isSSL ? `wss://${status.url}/f/wss/adbcc/${randId}/${status.diplayName}/0/0` : `wss://${status.url}/f/ws/adbcc/${randId}/${status.diplayName}/0/0`)
   : `ws://${status.url}:5000/ws/adbcc/${randId}/${status.diplayName}/0/0`;
 const ws = new WebSocket(wsURL);
 ws.onopen = () => {

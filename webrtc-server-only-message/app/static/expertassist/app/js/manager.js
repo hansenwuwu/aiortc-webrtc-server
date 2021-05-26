@@ -15,7 +15,8 @@ const EndCallEnum = Object.freeze({
 
 // 由於object的reference固定不變，故在其他地方引用之後，仍可改變值
 const status = {
-  url: isProduction ? "adatea.sytes.net" : "ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com",
+  url: isProduction ? "192.168.4.49" : "ec2-18-181-179-94.ap-northeast-1.compute.amazonaws.com",
+  isSSL: false,
   online: {},
   currentHmd: {},
   callState: CallingEnum.none,

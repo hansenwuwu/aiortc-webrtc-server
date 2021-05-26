@@ -2,7 +2,7 @@ import { isProduction, status, EndCallEnum } from "./manager.js";
 import { handleEndCall } from "./modules.js"; //為了處理janus斷開的特殊狀況
 
 var janusServer = isProduction
-  ? `https://${status.url}/j/janus`
+  ? (status.isSSL ? `https://${status.url}/j/janus` : `http://${status.url}/j/janus`)
   : `http://${status.url}:8088/janus`;
 
 var janus = null;
@@ -150,14 +150,14 @@ export function connectJanus() {
                       var video = list[f]["video_codec"];
                       Janus.debug(
                         "  >> [" +
-                          id +
-                          "] " +
-                          display +
-                          " (audio: " +
-                          audio +
-                          ", video: " +
-                          video +
-                          ")"
+                        id +
+                        "] " +
+                        display +
+                        " (audio: " +
+                        audio +
+                        ", video: " +
+                        video +
+                        ")"
                       );
                     }
                   }
@@ -177,14 +177,14 @@ export function connectJanus() {
                       var muted = list[f]["muted"];
                       Janus.debug(
                         "  >> [" +
-                          id +
-                          "] " +
-                          display +
-                          " (setup=" +
-                          setup +
-                          ", muted=" +
-                          muted +
-                          ")"
+                        id +
+                        "] " +
+                        display +
+                        " (setup=" +
+                        setup +
+                        ", muted=" +
+                        muted +
+                        ")"
                       );
                       if ($("#rp" + id).length === 0) {
                         $("#rp" + id + " > i").hide();
@@ -216,14 +216,14 @@ export function connectJanus() {
                       var video = list[f]["video_codec"];
                       Janus.debug(
                         "  >> [" +
-                          id +
-                          "] " +
-                          display +
-                          " (audio: " +
-                          audio +
-                          ", video: " +
-                          video +
-                          ")"
+                        id +
+                        "] " +
+                        display +
+                        " (audio: " +
+                        audio +
+                        ", video: " +
+                        video +
+                        ")"
                       );
                       //   newRemoteFeed(id, display, audio, video);
                     }
@@ -241,10 +241,10 @@ export function connectJanus() {
                     if (remoteFeed != null) {
                       Janus.debug(
                         "Feed " +
-                          remoteFeed.rfid +
-                          " (" +
-                          remoteFeed.rfdisplay +
-                          ") has left the room, detaching"
+                        remoteFeed.rfid +
+                        " (" +
+                        remoteFeed.rfdisplay +
+                        ") has left the room, detaching"
                       );
                       $("#remote1").empty().hide();
                       $("#videoremote1").empty();
@@ -271,10 +271,10 @@ export function connectJanus() {
                     if (remoteFeed != null) {
                       Janus.debug(
                         "Feed " +
-                          remoteFeed.rfid +
-                          " (" +
-                          remoteFeed.rfdisplay +
-                          ") has left the room, detaching"
+                        remoteFeed.rfid +
+                        " (" +
+                        remoteFeed.rfdisplay +
+                        ") has left the room, detaching"
                       );
                       $("#remote1").empty().hide();
                       $("#videoremote1").empty();
@@ -286,13 +286,13 @@ export function connectJanus() {
                       // This is a "no such room" error: give a more meaningful description
                       bootbox.alert(
                         "<p>Apparently room <code>" +
-                          myroom +
-                          "</code> (the one this demo uses as a test room) " +
-                          "does not exist...</p><p>Do you have an updated <code>janus.plugin.videoroom.jcfg</code> " +
-                          "configuration file? If not, make sure you copy the details of room <code>" +
-                          myroom +
-                          "</code> " +
-                          "from that sample in your current configuration file, then restart Janus and try again."
+                        myroom +
+                        "</code> (the one this demo uses as a test room) " +
+                        "does not exist...</p><p>Do you have an updated <code>janus.plugin.videoroom.jcfg</code> " +
+                        "configuration file? If not, make sure you copy the details of room <code>" +
+                        myroom +
+                        "</code> " +
+                        "from that sample in your current configuration file, then restart Janus and try again."
                       );
                     } else {
                       bootbox.alert(msg["error"]);
@@ -328,9 +328,9 @@ export function connectJanus() {
                   $("#myvideo").hide();
                   $("#videolocal").append(
                     '<div class="no-video-container">' +
-                      '<i class="fa fa-video-camera fa-5 no-video-icon" style="height: 100%;"></i>' +
-                      '<span class="no-video-text" style="font-size: 16px;">Video rejected, no webcam</span>' +
-                      "</div>"
+                    '<i class="fa fa-video-camera fa-5 no-video-icon" style="height: 100%;"></i>' +
+                    '<span class="no-video-text" style="font-size: 16px;">Video rejected, no webcam</span>' +
+                    "</div>"
                   );
                 }
               }
@@ -385,9 +385,9 @@ export function connectJanus() {
                 if ($("#videolocal .no-video-container").length === 0) {
                   $("#videolocal").append(
                     '<div class="no-video-container">' +
-                      '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
-                      '<span class="no-video-text">No webcam available</span>' +
-                      "</div>"
+                    '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
+                    '<span class="no-video-text">No webcam available</span>' +
+                    "</div>"
                   );
                 }
               } else {
@@ -396,7 +396,7 @@ export function connectJanus() {
               }
             },
             onremotestream: function (stream) {
-      
+
             },
             oncleanup: function () {
               webrtcUp = false;
@@ -556,11 +556,11 @@ export function newRemoteFeed(id, display, audio, video) {
           }
           Janus.log(
             "Successfully attached to feed " +
-              remoteFeed.rfid +
-              " (" +
-              remoteFeed.rfdisplay +
-              ") in room " +
-              msg["room"]
+            remoteFeed.rfid +
+            " (" +
+            remoteFeed.rfdisplay +
+            ") in room " +
+            msg["room"]
           );
           $("#remote1").removeClass("hide").html(remoteFeed.rfdisplay).show();
         } else if (event === "event") {
@@ -609,9 +609,9 @@ export function newRemoteFeed(id, display, audio, video) {
     iceState: function (state) {
       Janus.log(
         "ICE state of this WebRTC PeerConnection (feed #" +
-          remoteFeed.rfindex +
-          ") changed to " +
-          state
+        remoteFeed.rfindex +
+        ") changed to " +
+        state
       );
     },
     webrtcState: function (on) {
@@ -622,10 +622,10 @@ export function newRemoteFeed(id, display, audio, video) {
       }
       Janus.log(
         "Janus says this WebRTC PeerConnection (feed #" +
-          remoteFeed.rfindex +
-          ") is " +
-          (on ? "up" : "down") +
-          " now"
+        remoteFeed.rfindex +
+        ") is " +
+        (on ? "up" : "down") +
+        " now"
       );
     },
     onlocalstream: function (stream) {
@@ -642,7 +642,7 @@ export function newRemoteFeed(id, display, audio, video) {
       );
       $("#videoremote1").append(
         '<video class="rounded centered relative hide" id="remotevideo1' +
-          '" width="100%" height="100%" autoplay playsinline/>'
+        '" width="100%" height="100%" autoplay playsinline/>'
       );
       // $("#videoremote1").append(
       //   '<span class="label label-primary hide" id="curres1' +
@@ -681,9 +681,9 @@ export function newRemoteFeed(id, display, audio, video) {
         if ($("#videoremote1" + " .no-video-container").length === 0) {
           $("#videoremote1").append(
             '<div class="no-video-container">' +
-              '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
-              '<span class="no-video-text">No remote video available</span>' +
-              "</div>"
+            '<i class="fa fa-video-camera fa-5 no-video-icon"></i>' +
+            '<span class="no-video-text">No remote video available</span>' +
+            "</div>"
           );
         }
       } else {
