@@ -1,0 +1,18 @@
+version: '3.8'
+    
+services:
+  nginx:
+    image: hansenwu/nginx-ea
+    container_name: nginx-ea
+    ports: 
+     - "80:80"
+  aiortc:
+    image: hansenwu/webrtc-server
+    container_name: ea-server
+    ports:
+      - "127.0.0.1:5000:5000"
+  janus:
+    image: canyan/janus-gateway:latest
+    container_name: janus
+    ports:
+      - "127.0.0.1:8088:8088"
