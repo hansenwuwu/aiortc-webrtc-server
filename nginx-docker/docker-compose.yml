@@ -5,6 +5,8 @@ services:
     image: hansenwu/nginx-ea
     container_name: nginx-ea
     network_mode: host
+    volumes: 
+      - ../webrtc-server-only-message/app/static:/usr/share/nginx/html
   aiortc:
     image: hansenwu/webrtc-server
     container_name: ea-server
