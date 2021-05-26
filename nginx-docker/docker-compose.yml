@@ -4,8 +4,7 @@ services:
   nginx:
     image: hansenwu/nginx-ea
     container_name: nginx-ea
-    ports: 
-     - "80:80"
+    network_mode: host
   aiortc:
     image: hansenwu/webrtc-server
     container_name: ea-server
