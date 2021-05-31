@@ -7,6 +7,7 @@ services:
     network_mode: host
     volumes: 
       - ../webrtc-server-only-message/app/static:/usr/share/nginx/html
+      - ./cert:/cert
   aiortc:
     image: hansenwu/webrtc-server
     container_name: ea-server
