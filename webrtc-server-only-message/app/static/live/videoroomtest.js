@@ -1,6 +1,6 @@
 var server = null;
-var server_name = "192.168.4.49";
-var isSSL = false;
+var server_name = "192.168.4.23";
+var isSSL = true;
 
 if (window.location.protocol === 'http:') {
 	// server = "http://" + "192.168.4.26" + ":8088/janus";
