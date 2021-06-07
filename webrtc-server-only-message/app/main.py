@@ -1,8 +1,10 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import json
+import os
+from routers import models
 
 app = FastAPI()
 
@@ -31,6 +33,8 @@ async def online():
         'online': online_list
     }
     return output
+
+app.include_router(models.router)
 
 """
     WebSocket
