@@ -8,6 +8,15 @@ import random
 import shutil
 from datetime import datetime
 
+if os.getenv('MONGO_USER'):
+    MONGO_USER = os.getenv('MONGO_USER')
+    MONGO_PASS = os.getenv('MONGO_PASS')
+    MONGO_HOST = os.getenv('MONGO_HOST')
+    MONGO_PORT = os.getenv('MONGO_PORT')
+    MONGODB_URL = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}"
+else:
+    MONGODB_URL = None
+
 router = APIRouter(
     prefix="/api/v1/model",
 )
@@ -45,7 +54,7 @@ async def create_upload_file(
         date=datetime.now()
     )
 
-    with MongoClient() as client:
+    with MongoClient(MONGODB_URL) as client:
         msg_collection = client[DB][MSG_COLLECTION]
         result = msg_collection.insert_one(model.dict())
         ack = result.acknowledged
@@ -62,7 +71,7 @@ async def create_upload_file(
 
 @router.get("/", response_model=List[Model])
 def get_messages():
-    with MongoClient() as client:
+    with MongoClient(MONGODB_URL) as client:
         msg_collection = client[DB][MSG_COLLECTION]
         msg_list = msg_collection.find()
         response_msg_list = []
@@ -72,7 +81,7 @@ def get_messages():
 
 @router.get("/{qrcode}", response_model=List[Model])
 def get_messages(qrcode: str):
-    with MongoClient() as client:
+    with MongoClient(MONGODB_URL) as client:
         msg_collection = client[DB][MSG_COLLECTION]
         msg_list = msg_collection.find({"qrcode": qrcode})
         response_msg_list = []
@@ -82,7 +91,7 @@ def get_messages(qrcode: str):
 
 @router.delete("/{qrcode}", response_description="Model data deleted from the database")
 async def delete_model_data(qrcode: str):
-    with MongoClient() as client:
+    with MongoClient(MONGODB_URL) as client:
         msg_collection = client[DB][MSG_COLLECTION]
 
         msg_list = msg_collection.find({"qrcode": qrcode})
